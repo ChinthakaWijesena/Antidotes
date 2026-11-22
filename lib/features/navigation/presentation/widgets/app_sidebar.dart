@@ -151,6 +151,13 @@ class AppSidebar extends StatelessWidget {
                   isSelected: selectedIndex == 4,
                   onTap: () => onDestinationSelected(4),
                 ),
+                const SizedBox(height: 6),
+                _SidebarItem(
+                  icon: Icons.delete_sweep_rounded,
+                  label: 'Software Uninstaller',
+                  isSelected: selectedIndex == 5,
+                  onTap: () => onDestinationSelected(5),
+                ),
               ],
             ),
           ),

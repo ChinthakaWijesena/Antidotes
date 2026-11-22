@@ -5,6 +5,7 @@ import 'package:antidotes/features/browser_cleaner/presentation/screens/browser_
 import 'package:antidotes/features/hardware_monitor/presentation/screens/hardware_monitor_screen.dart';
 import 'package:antidotes/features/junk_cleaner/presentation/screens/junk_cleaner_screen.dart';
 import 'package:antidotes/features/software_installer/presentation/screens/software_installer_screen.dart';
+import 'package:antidotes/features/software_uninstaller/presentation/screens/software_uninstaller_screen.dart';
 import 'package:antidotes/features/startup_manager/presentation/screens/startup_manager_screen.dart';
 import '../widgets/app_sidebar.dart';
 
@@ -60,6 +61,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 SoftwareInstallerScreen(
                   key: ValueKey(
                       'installer_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+                SoftwareUninstallerScreen(
+                  key: ValueKey(
+                      'uninstaller_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
                 ),
               ],
             ),
