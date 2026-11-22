@@ -24,20 +24,20 @@ void main() {
       expect(topics[2].items.length, 2);
       expect(topics[2].items.map((i) => i.index), [4, 5]);
 
-      expect(topics[3].id, 'network_security');
-      expect(topics[3].title, 'NETWORK & SECURITY');
-      expect(topics[3].items.length, 1);
-      expect(topics[3].items.map((i) => i.index), [7]);
+      expect(topics[3].id, 'network_tools');
+      expect(topics[3].title, 'NETWORK & TOOLS');
+      expect(topics[3].items.length, 2);
+      expect(topics[3].items.map((i) => i.index), [7, 8]);
     });
 
-    test('All 8 subtopic indices (0-7) are uniquely covered', () {
+    test('All 9 subtopic indices (0-8) are uniquely covered', () {
       final allIndices = NavTopic.defaultTopics
           .expand((topic) => topic.items.map((item) => item.index))
           .toList();
 
-      expect(allIndices.length, 8);
-      expect(allIndices.toSet().length, 8);
-      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7]);
+      expect(allIndices.length, 9);
+      expect(allIndices.toSet().length, 9);
+      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
     });
 
     test('NavTopic.forIndex resolves parent topic correctly for each subtopic', () {
@@ -48,7 +48,8 @@ void main() {
       expect(NavTopic.forIndex(6)?.id, 'system_hardware'); // Windows Settings
       expect(NavTopic.forIndex(4)?.id, 'software_management'); // Software Installer
       expect(NavTopic.forIndex(5)?.id, 'software_management'); // Software Uninstaller
-      expect(NavTopic.forIndex(7)?.id, 'network_security'); // DNS Changer
+      expect(NavTopic.forIndex(7)?.id, 'network_tools'); // DNS Changer
+      expect(NavTopic.forIndex(8)?.id, 'network_tools'); // Speed Test
       expect(NavTopic.forIndex(99), isNull);
     });
   });
@@ -79,13 +80,14 @@ void main() {
       expect(find.text('OPTIMIZATION'), findsOneWidget);
       expect(find.text('SYSTEM & HARDWARE'), findsOneWidget);
       expect(find.text('SOFTWARE MANAGER'), findsOneWidget);
-      expect(find.text('NETWORK & SECURITY'), findsOneWidget);
+      expect(find.text('NETWORK & TOOLS'), findsOneWidget);
 
       // Verify Subtopics
       expect(find.text('Junk Cleaner'), findsOneWidget);
       expect(find.text('Hardware Monitor'), findsOneWidget);
       expect(find.text('Software Installer'), findsOneWidget);
       expect(find.text('DNS Changer'), findsOneWidget);
+      expect(find.text('Speed Test'), findsOneWidget);
 
       // Tap on a subtopic item
       await tester.tap(find.text('Hardware Monitor'));

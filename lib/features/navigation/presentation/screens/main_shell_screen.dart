@@ -9,6 +9,7 @@ import 'package:antidotes/features/software_uninstaller/presentation/screens/sof
 import 'package:antidotes/features/startup_manager/presentation/screens/startup_manager_screen.dart';
 import 'package:antidotes/features/windows_settings/presentation/screens/windows_settings_screen.dart';
 import 'package:antidotes/features/dns_changer/presentation/screens/dns_changer_screen.dart';
+import 'package:antidotes/features/speed_test/presentation/screens/speed_test_screen.dart';
 import '../widgets/app_sidebar.dart';
 
 class MainShellScreen extends StatefulWidget {
@@ -75,6 +76,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 DnsChangerScreen(
                   key: ValueKey(
                       'dns_changer_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+                SpeedTestScreen(
+                  key: ValueKey(
+                      'speed_test_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
                 ),
               ],
             ),

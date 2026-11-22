@@ -74,14 +74,20 @@ class NavTopic {
       ],
     ),
     NavTopic(
-      id: 'network_security',
-      title: 'NETWORK & SECURITY',
-      icon: Icons.security_rounded,
+      id: 'network_tools',
+      title: 'NETWORK & TOOLS',
+      icon: Icons.wifi_tethering_rounded,
       items: [
         NavItem(
           index: 7,
           label: 'DNS Changer',
           icon: Icons.dns_rounded,
+        ),
+        NavItem(
+          index: 8,
+          label: 'Speed Test',
+          icon: Icons.speed_rounded,
+          badgeText: 'LIVE',
         ),
       ],
     ),
