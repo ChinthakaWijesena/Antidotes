@@ -913,6 +913,35 @@ class _FanSpeedMonitorCardState extends State<FanSpeedMonitorCard>
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
+              // Data source / accuracy badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: widget.fan.isReal
+                      ? const Color(0xFF00E676).withValues(alpha: 0.1)
+                      : const Color(0xFFFF9100).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: widget.fan.isReal
+                        ? const Color(0xFF00E676).withValues(alpha: 0.4)
+                        : const Color(0xFFFF9100).withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Text(
+                  widget.fan.isReal
+                      ? '● ${widget.fan.source}'
+                      : '~ ${widget.fan.source}',
+                  style: TextStyle(
+                    color: widget.fan.isReal
+                        ? const Color(0xFF00E676)
+                        : const Color(0xFFFF9100),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
