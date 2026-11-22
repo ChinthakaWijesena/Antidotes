@@ -137,6 +137,13 @@ class AppSidebar extends StatelessWidget {
                   isSelected: selectedIndex == 2,
                   onTap: () => onDestinationSelected(2),
                 ),
+                const SizedBox(height: 6),
+                _SidebarItem(
+                  icon: Icons.monitor_heart_rounded,
+                  label: 'Hardware Monitor',
+                  isSelected: selectedIndex == 3,
+                  onTap: () => onDestinationSelected(3),
+                ),
               ],
             ),
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:antidotes/core/constants/app_colors.dart';
 import 'package:antidotes/core/theme/app_theme_scope.dart';
 import 'package:antidotes/features/browser_cleaner/presentation/screens/browser_cleaner_screen.dart';
+import 'package:antidotes/features/hardware_monitor/presentation/screens/hardware_monitor_screen.dart';
 import 'package:antidotes/features/junk_cleaner/presentation/screens/junk_cleaner_screen.dart';
 import 'package:antidotes/features/startup_manager/presentation/screens/startup_manager_screen.dart';
 import '../widgets/app_sidebar.dart';
@@ -50,6 +51,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 BrowserCleanerScreen(
                   key: ValueKey(
                       'browser_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+                HardwareMonitorScreen(
+                  key: ValueKey(
+                      'hardware_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
                 ),
               ],
             ),
