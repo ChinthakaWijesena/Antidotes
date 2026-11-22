@@ -144,6 +144,13 @@ class AppSidebar extends StatelessWidget {
                   isSelected: selectedIndex == 3,
                   onTap: () => onDestinationSelected(3),
                 ),
+                const SizedBox(height: 6),
+                _SidebarItem(
+                  icon: Icons.get_app_rounded,
+                  label: 'Software Installer',
+                  isSelected: selectedIndex == 4,
+                  onTap: () => onDestinationSelected(4),
+                ),
               ],
             ),
           ),
