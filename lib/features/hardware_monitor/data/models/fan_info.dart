@@ -2,9 +2,10 @@ class FanInfo {
   final int cpuFanRpm;
   final int gpuFanRpm;
   final double speedPercent;
-  final String mode; // 'Quiet', 'Balanced', 'Performance', 'Turbo'
+  final String mode; // 'Silent', 'Balanced', 'Performance', 'Turbo'
   final int fanCount;
   final bool isRunning;
+  final double acousticsDba;
   final List<double> history;
 
   const FanInfo({
@@ -14,6 +15,7 @@ class FanInfo {
     required this.mode,
     this.fanCount = 2,
     this.isRunning = true,
+    this.acousticsDba = 19.8,
     this.history = const [],
   });
 
@@ -26,6 +28,7 @@ class FanInfo {
     String? mode,
     int? fanCount,
     bool? isRunning,
+    double? acousticsDba,
     List<double>? history,
   }) {
     return FanInfo(
@@ -35,6 +38,7 @@ class FanInfo {
       mode: mode ?? this.mode,
       fanCount: fanCount ?? this.fanCount,
       isRunning: isRunning ?? this.isRunning,
+      acousticsDba: acousticsDba ?? this.acousticsDba,
       history: history ?? this.history,
     );
   }

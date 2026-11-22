@@ -801,14 +801,17 @@ class _FanSpeedMonitorCardState extends State<FanSpeedMonitorCard>
 
   Color _getModeColor(String mode) {
     switch (mode.toLowerCase()) {
+      case 'silent':
       case 'quiet':
-        return const Color(0xFF00E676);
+        return const Color(0xFF00E676); // Green – silent/quiet
       case 'balanced':
-        return const Color(0xFF00B0FF);
+        return const Color(0xFF00B0FF); // Blue – balanced
       case 'performance':
-        return const Color(0xFFFF9100);
+        return const Color(0xFFFF9100); // Orange – performance
       case 'turbo':
-        return const Color(0xFFFF5252);
+        return const Color(0xFFFF5252); // Red – turbo
+      case 'windows':
+        return const Color(0xFF7E57C2); // Purple – windows managed
       default:
         return AppColors.primary;
     }
@@ -968,7 +971,7 @@ class _FanSpeedMonitorCardState extends State<FanSpeedMonitorCard>
             children: [
               _fanSubItem('CPU Fan', '${_formatRpm(widget.fan.cpuFanRpm)} RPM', Icons.memory_rounded),
               _fanSubItem('GPU Fan', '${_formatRpm(widget.fan.gpuFanRpm)} RPM', Icons.videogame_asset_rounded),
-              _fanSubItem('Status', 'Active Cooling', Icons.check_circle_outline_rounded),
+              _fanSubItem('Fan Acoustics', '${widget.fan.acousticsDba.toStringAsFixed(1)} dBA', Icons.volume_up_rounded),
             ],
           ),
         ],

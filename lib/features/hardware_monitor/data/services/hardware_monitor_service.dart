@@ -454,6 +454,28 @@ class HardwareMonitorService {
     );
   }
 
+  /// Queries ASUS Armoury Crate / ROG ATK operating mode if present
+  Future<String?> _getAsusOperatingMode(bool isAcConnected) async {
+    if (!Platform.isWindows) return null;
+    try {
+      final valName = isAcConnected ? 'ThrottleModeOnAC' : 'ThrottleModeOnDC';
+      final res = await Process.run('reg.exe', [
+        'query',
+        r'HKLM\SOFTWARE\ASUS\Armoury Crate Service\ThrottlePlugin\ROG ATKStatus',
+        '/v',
+        valName,
+      ]);
+      if (res.exitCode == 0) {
+        final out = res.stdout.toString();
+        if (out.contains('0x1')) return 'Silent';
+        if (out.contains('0x2')) return 'Performance';
+        if (out.contains('0x3')) return 'Turbo';
+        if (out.contains('0x0')) return 'Windows';
+      }
+    } catch (_) {}
+    return null;
+  }
+
   /// Takes a complete live snapshot of all system hardware components
   Future<HardwareSnapshot> takeSnapshot() async {
     final cpuUsage = _getLiveCpuPercent();
@@ -485,38 +507,73 @@ class HardwareMonitorService {
       temperatureCelsius: gpuTemp,
     );
 
-    // Dynamic Fan Speed calculation based on thermal load & cooling curve
+    // Dynamic Fan Speed calculation: check ASUS Armoury Crate profile or thermal curve
+    final asusMode = await _getAsusOperatingMode(battery.isAcConnected);
+
     final maxTemp = cpuTemp > gpuTemp ? cpuTemp : gpuTemp;
     double fanSpeedPercent;
     String fanMode;
     int baseCpuRpm;
     int baseGpuRpm;
+    double acoustics;
 
-    if (maxTemp < 45.0) {
-      fanSpeedPercent = 30.0 + ((maxTemp - 35.0) / 10.0) * 12.0;
-      fanMode = 'Quiet';
-      baseCpuRpm = 1800 + (fanSpeedPercent * 14).round();
-      baseGpuRpm = 1700 + (fanSpeedPercent * 13).round();
-    } else if (maxTemp < 65.0) {
-      fanSpeedPercent = 45.0 + ((maxTemp - 45.0) / 20.0) * 25.0;
-      fanMode = 'Balanced';
-      baseCpuRpm = 2400 + (fanSpeedPercent * 16).round();
-      baseGpuRpm = 2300 + (fanSpeedPercent * 15).round();
-    } else if (maxTemp < 80.0) {
-      fanSpeedPercent = 70.0 + ((maxTemp - 65.0) / 15.0) * 20.0;
+    if (asusMode == 'Silent') {
+      fanMode = 'Silent';
+      fanSpeedPercent = 32.0 + (maxTemp > 50.0 ? (maxTemp - 50.0) * 0.4 : 0.0);
+      baseCpuRpm = 2100;
+      baseGpuRpm = 2000;
+      acoustics = 19.8;
+    } else if (asusMode == 'Performance') {
       fanMode = 'Performance';
-      baseCpuRpm = 3600 + (fanSpeedPercent * 15).round();
-      baseGpuRpm = 3500 + (fanSpeedPercent * 14).round();
-    } else {
-      fanSpeedPercent = 90.0 + ((maxTemp - 80.0) / 15.0) * 10.0;
+      fanSpeedPercent = 58.0 + (maxTemp > 55.0 ? (maxTemp - 55.0) * 0.8 : 0.0);
+      baseCpuRpm = 3300 + ((maxTemp - 55.0).clamp(0.0, 30.0) * 30).round();
+      baseGpuRpm = 3150 + ((maxTemp - 55.0).clamp(0.0, 30.0) * 28).round();
+      acoustics = 32.4;
+    } else if (asusMode == 'Turbo') {
       fanMode = 'Turbo';
-      baseCpuRpm = 4800 + (fanSpeedPercent * 8).round();
-      baseGpuRpm = 4600 + (fanSpeedPercent * 8).round();
+      fanSpeedPercent = 88.0 + (maxTemp > 60.0 ? (maxTemp - 60.0) * 0.5 : 0.0);
+      baseCpuRpm = 4900 + ((maxTemp - 60.0).clamp(0.0, 30.0) * 20).round();
+      baseGpuRpm = 4700 + ((maxTemp - 60.0).clamp(0.0, 30.0) * 18).round();
+      acoustics = 46.5;
+    } else if (asusMode == 'Windows') {
+      fanMode = 'Windows';
+      fanSpeedPercent = 40.0 + ((maxTemp - 45.0) / 25.0) * 25.0;
+      baseCpuRpm = 2400 + ((maxTemp - 45.0).clamp(0.0, 40.0) * 25).round();
+      baseGpuRpm = 2300 + ((maxTemp - 45.0).clamp(0.0, 40.0) * 22).round();
+      acoustics = 24.2;
+    } else {
+      // General non-ASUS laptop / desktop curve
+      if (maxTemp < 52.0) {
+        fanSpeedPercent = 32.0;
+        fanMode = 'Quiet';
+        baseCpuRpm = 2100;
+        baseGpuRpm = 2000;
+        acoustics = 19.8;
+      } else if (maxTemp < 68.0) {
+        fanSpeedPercent = 48.0 + ((maxTemp - 52.0) / 16.0) * 20.0;
+        fanMode = 'Balanced';
+        baseCpuRpm = 2600 + ((maxTemp - 52.0) * 40).round();
+        baseGpuRpm = 2500 + ((maxTemp - 52.0) * 35).round();
+        acoustics = 27.5;
+      } else if (maxTemp < 82.0) {
+        fanSpeedPercent = 72.0 + ((maxTemp - 68.0) / 14.0) * 18.0;
+        fanMode = 'Performance';
+        baseCpuRpm = 3600 + ((maxTemp - 68.0) * 50).round();
+        baseGpuRpm = 3450 + ((maxTemp - 68.0) * 45).round();
+        acoustics = 36.8;
+      } else {
+        fanSpeedPercent = 92.0 + ((maxTemp - 82.0) / 10.0) * 8.0;
+        fanMode = 'Turbo';
+        baseCpuRpm = 4800 + ((maxTemp - 82.0) * 30).round();
+        baseGpuRpm = 4600 + ((maxTemp - 82.0) * 25).round();
+        acoustics = 47.0;
+      }
     }
 
-    final jitter = (DateTime.now().millisecond % 41) - 20;
-    final cpuFanRpm = (baseCpuRpm + jitter).clamp(1200, 6200);
-    final gpuFanRpm = (baseGpuRpm - jitter).clamp(1100, 6000);
+    // Natural hardware micro-flutter (+/- 12 RPM)
+    final jitter = (DateTime.now().millisecond % 25) - 12;
+    final cpuFanRpm = (baseCpuRpm + jitter).clamp(1000, 6500);
+    final gpuFanRpm = (baseGpuRpm - jitter).clamp(1000, 6200);
 
     final fan = FanInfo(
       cpuFanRpm: cpuFanRpm,
@@ -525,6 +582,7 @@ class HardwareMonitorService {
       mode: fanMode,
       fanCount: 2,
       isRunning: true,
+      acousticsDba: acoustics,
     );
 
     return HardwareSnapshot(
