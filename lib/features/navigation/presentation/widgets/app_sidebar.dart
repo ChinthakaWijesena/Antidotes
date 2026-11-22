@@ -165,6 +165,13 @@ class AppSidebar extends StatelessWidget {
                   isSelected: selectedIndex == 6,
                   onTap: () => onDestinationSelected(6),
                 ),
+                const SizedBox(height: 6),
+                _SidebarItem(
+                  icon: Icons.dns_rounded,
+                  label: 'DNS Changer',
+                  isSelected: selectedIndex == 7,
+                  onTap: () => onDestinationSelected(7),
+                ),
               ],
             ),
           ),

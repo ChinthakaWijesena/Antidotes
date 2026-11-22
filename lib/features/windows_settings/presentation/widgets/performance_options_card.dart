@@ -177,3 +177,4 @@ class PerformanceOptionsCard extends StatelessWidget {
     );
   }
 }
+

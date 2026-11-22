@@ -106,3 +106,4 @@ class WindowsSettingsController extends ChangeNotifier {
     await _service.setVirtualMemoryConfig(config);
   }
 }
+

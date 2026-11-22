@@ -163,3 +163,4 @@ class PowerModesCard extends StatelessWidget {
     );
   }
 }
+
