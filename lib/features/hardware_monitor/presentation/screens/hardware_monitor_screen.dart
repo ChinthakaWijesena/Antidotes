@@ -75,7 +75,7 @@ class _HardwareMonitorScreenState extends State<HardwareMonitorScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Grid of Live Cards: GPU & Battery
+                    // Grid of Live Cards: GPU & Fan Speed (Cooling)
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -84,18 +84,21 @@ class _HardwareMonitorScreenState extends State<HardwareMonitorScreen> {
                         ),
                         const SizedBox(width: 20),
                         Expanded(
-                          child: BatteryMonitorCard(battery: snapshot.battery),
+                          child: FanSpeedMonitorCard(
+                            fan: snapshot.fan,
+                            history: _controller.fanHistory,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
 
-                    // Grid of Live Cards: Storage & Network
+                    // Grid of Live Cards: Battery & Network
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: StorageMonitorCard(storage: snapshot.storage),
+                          child: BatteryMonitorCard(battery: snapshot.battery),
                         ),
                         const SizedBox(width: 20),
                         Expanded(
@@ -103,6 +106,10 @@ class _HardwareMonitorScreenState extends State<HardwareMonitorScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 20),
+
+                    // Live Card: Storage Drives
+                    StorageMonitorCard(storage: snapshot.storage),
                   ],
                 ),
               ),

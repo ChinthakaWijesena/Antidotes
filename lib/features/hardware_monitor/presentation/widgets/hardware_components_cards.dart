@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/battery_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/cpu_info.dart';
+import 'package:antidotes/features/hardware_monitor/data/models/fan_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/gpu_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/network_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/ram_info.dart';
@@ -748,6 +749,253 @@ class NetworkMonitorCard extends StatelessWidget {
                 color: AppColors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+}
+
+class FanSpeedMonitorCard extends StatefulWidget {
+  final FanInfo fan;
+  final List<double> history;
+
+  const FanSpeedMonitorCard({
+    super.key,
+    required this.fan,
+    required this.history,
+  });
+
+  @override
+  State<FanSpeedMonitorCard> createState() => _FanSpeedMonitorCardState();
+}
+
+class _FanSpeedMonitorCardState extends State<FanSpeedMonitorCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void didUpdateWidget(covariant FanSpeedMonitorCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final speed = (widget.fan.speedPercent / 100.0).clamp(0.2, 1.0);
+    final newSeconds = (2.5 / speed).clamp(0.6, 3.5);
+    final newMs = (newSeconds * 1000).round();
+    if ((_animController.duration?.inMilliseconds ?? 2000) != newMs) {
+      _animController.duration = Duration(milliseconds: newMs);
+      if (!_animController.isAnimating) _animController.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  Color _getModeColor(String mode) {
+    switch (mode.toLowerCase()) {
+      case 'quiet':
+        return const Color(0xFF00E676);
+      case 'balanced':
+        return const Color(0xFF00B0FF);
+      case 'performance':
+        return const Color(0xFFFF9100);
+      case 'turbo':
+        return const Color(0xFFFF5252);
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  String _formatRpm(int rpm) {
+    return rpm.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final modeColor = _getModeColor(widget.fan.mode);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.surfaceBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00B0FF).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: RotationTransition(
+                      turns: _animController,
+                      child: const Icon(
+                        Icons.cyclone_rounded,
+                        color: Color(0xFF00B0FF),
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Cooling & Fan Speed',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '${widget.fan.fanCount} Active Fans • Smart Dynamic Control',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // Mode badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: modeColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: modeColor.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: modeColor,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.fan.mode.toUpperCase(),
+                      style: TextStyle(
+                        color: modeColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Live Metric
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '${widget.fan.speedPercent.toStringAsFixed(0)}%',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -1,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Speed Duty Cycle',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '~${_formatRpm(widget.fan.averageRpm)} RPM avg',
+                  style: TextStyle(
+                    fontFamily: 'Consolas',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Mini Realtime Sparkline
+          MiniSparklineChart(
+            data: widget.history,
+            lineColor: const Color(0xFF00B0FF),
+            height: 48,
+          ),
+          const SizedBox(height: 14),
+
+          // Dual Fan Specs Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _fanSubItem('CPU Fan', '${_formatRpm(widget.fan.cpuFanRpm)} RPM', Icons.memory_rounded),
+              _fanSubItem('GPU Fan', '${_formatRpm(widget.fan.gpuFanRpm)} RPM', Icons.videogame_asset_rounded),
+              _fanSubItem('Status', 'Active Cooling', Icons.check_circle_outline_rounded),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _fanSubItem(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.textMuted),
+        const SizedBox(width: 6),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+            Text(
+              value,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                fontFamily: value.contains('RPM') ? 'Consolas' : null,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

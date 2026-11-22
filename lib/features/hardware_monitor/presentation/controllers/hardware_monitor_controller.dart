@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/battery_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/cpu_info.dart';
+import 'package:antidotes/features/hardware_monitor/data/models/fan_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/gpu_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/hardware_snapshot.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/network_info.dart';
@@ -16,6 +17,7 @@ class HardwareMonitorController extends ChangeNotifier {
   HardwareSnapshot? _currentSnapshot;
   final List<double> _cpuHistory = [];
   final List<double> _ramHistory = [];
+  final List<double> _fanHistory = [];
   bool _isLive = true;
 
   static const int maxHistoryPoints = 20;
@@ -27,12 +29,14 @@ class HardwareMonitorController extends ChangeNotifier {
   CpuInfo? get cpu => _currentSnapshot?.cpu;
   RamInfo? get ram => _currentSnapshot?.ram;
   GpuInfo? get gpu => _currentSnapshot?.gpu;
+  FanInfo? get fan => _currentSnapshot?.fan;
   StorageInfo? get storage => _currentSnapshot?.storage;
   BatteryInfo? get battery => _currentSnapshot?.battery;
   NetworkInfo? get network => _currentSnapshot?.network;
 
   List<double> get cpuHistory => List.unmodifiable(_cpuHistory);
   List<double> get ramHistory => List.unmodifiable(_ramHistory);
+  List<double> get fanHistory => List.unmodifiable(_fanHistory);
   bool get isLive => _isLive;
 
   Future<void> start() async {
@@ -63,6 +67,11 @@ class HardwareMonitorController extends ChangeNotifier {
     _ramHistory.add(snapshot.ram.usagePercent);
     if (_ramHistory.length > maxHistoryPoints) {
       _ramHistory.removeAt(0);
+    }
+
+    _fanHistory.add(snapshot.fan.speedPercent);
+    if (_fanHistory.length > maxHistoryPoints) {
+      _fanHistory.removeAt(0);
     }
 
     _currentSnapshot = snapshot;

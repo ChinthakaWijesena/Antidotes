@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/battery_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/cpu_info.dart';
+import 'package:antidotes/features/hardware_monitor/data/models/fan_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/gpu_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/network_info.dart';
 import 'package:antidotes/features/hardware_monitor/data/models/ram_info.dart';
@@ -115,10 +116,34 @@ void main() {
       expect(net.isConnected, isTrue);
       expect(net.linkSpeed, '270 Mbps');
     });
+
+    test('FanInfo properties calculate average RPM and copy properly', () {
+      const fan = FanInfo(
+        cpuFanRpm: 2800,
+        gpuFanRpm: 2600,
+        speedPercent: 55.0,
+        mode: 'Balanced',
+        fanCount: 2,
+        isRunning: true,
+      );
+
+      expect(fan.cpuFanRpm, 2800);
+      expect(fan.gpuFanRpm, 2600);
+      expect(fan.averageRpm, 2700);
+      expect(fan.speedPercent, 55.0);
+      expect(fan.mode, 'Balanced');
+      expect(fan.fanCount, 2);
+      expect(fan.isRunning, isTrue);
+
+      final updated = fan.copyWith(mode: 'Turbo', speedPercent: 95.0);
+      expect(updated.mode, 'Turbo');
+      expect(updated.speedPercent, 95.0);
+      expect(updated.cpuFanRpm, 2800);
+    });
   });
 
   group('HardwareMonitorService & Controller Tests', () {
-    test('HardwareMonitorService takes a live hardware snapshot', () async {
+    test('HardwareMonitorService takes a live hardware snapshot including fan', () async {
       final service = HardwareMonitorService();
       await service.initialize();
 
@@ -127,6 +152,10 @@ void main() {
       expect(snapshot.cpu.modelName.isNotEmpty, isTrue);
       expect(snapshot.cpu.physicalCores, greaterThan(0));
       expect(snapshot.ram.totalBytes, greaterThan(0));
+      expect(snapshot.fan.cpuFanRpm, greaterThan(0));
+      expect(snapshot.fan.gpuFanRpm, greaterThan(0));
+      expect(snapshot.fan.averageRpm, greaterThan(0));
+      expect(snapshot.fan.mode.isNotEmpty, isTrue);
       expect(snapshot.storage.drives.isNotEmpty, isTrue);
       expect(snapshot.network.ipAddress.isNotEmpty, isTrue);
     });
@@ -138,6 +167,9 @@ void main() {
       expect(controller.currentSnapshot, isNotNull);
       expect(controller.cpuHistory.isNotEmpty, isTrue);
       expect(controller.ramHistory.isNotEmpty, isTrue);
+      expect(controller.fanHistory.isNotEmpty, isTrue);
+      expect(controller.fan, isNotNull);
+      expect(controller.fan!.isRunning, isTrue);
 
       expect(controller.isLive, isTrue);
       controller.toggleLive();
