@@ -52,7 +52,7 @@ class _CategoryTileState extends State<CategoryTile> {
                 Checkbox(
                   value: cat.isSelected,
                   activeColor: AppColors.primary,
-                  checkColor: AppColors.background,
+                  checkColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -214,7 +214,7 @@ class _CategoryTileState extends State<CategoryTile> {
                       Checkbox(
                         value: item.isSelected,
                         activeColor: AppColors.primary,
-                        checkColor: AppColors.background,
+                        checkColor: Colors.white,
                         visualDensity: VisualDensity.compact,
                         onChanged: widget.isInteractive
                             ? (_) {

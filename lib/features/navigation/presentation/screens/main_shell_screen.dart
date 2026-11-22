@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:antidotes/core/constants/app_colors.dart';
+import 'package:antidotes/core/theme/app_theme_scope.dart';
+import 'package:antidotes/features/browser_cleaner/presentation/screens/browser_cleaner_screen.dart';
 import 'package:antidotes/features/junk_cleaner/presentation/screens/junk_cleaner_screen.dart';
 import 'package:antidotes/features/startup_manager/presentation/screens/startup_manager_screen.dart';
 import '../widgets/app_sidebar.dart';
@@ -13,14 +16,12 @@ class MainShellScreen extends StatefulWidget {
 class _MainShellScreenState extends State<MainShellScreen> {
   int _selectedNavIndex = 0;
 
-  final List<Widget> _screens = const [
-    JunkCleanerScreen(),
-    StartupManagerScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final theme = AppThemeScope.of(context);
+
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: Row(
         children: [
           // Left Sidebar Navigation
@@ -37,7 +38,20 @@ class _MainShellScreenState extends State<MainShellScreen> {
           Expanded(
             child: IndexedStack(
               index: _selectedNavIndex,
-              children: _screens,
+              children: [
+                JunkCleanerScreen(
+                  key: ValueKey(
+                      'junk_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+                StartupManagerScreen(
+                  key: ValueKey(
+                      'startup_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+                BrowserCleanerScreen(
+                  key: ValueKey(
+                      'browser_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+              ],
             ),
           ),
         ],

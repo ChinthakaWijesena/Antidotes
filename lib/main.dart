@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_theme_scope.dart';
 import 'core/theme/system_theme_controller.dart';
 import 'features/navigation/presentation/screens/main_shell_screen.dart';
 
@@ -20,13 +21,17 @@ class AntidotesApp extends StatelessWidget {
     return ListenableBuilder(
       listenable: themeController,
       builder: (context, _) {
-        return MaterialApp(
-          title: 'Antidotes - PC Cleaner & Optimizer',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.buildLightTheme(themeController.accentColor),
-          darkTheme: AppTheme.buildDarkTheme(themeController.accentColor),
-          themeMode: ThemeMode.system,
-          home: const MainShellScreen(),
+        return AppThemeScope(
+          controller: themeController,
+          child: MaterialApp(
+            title: 'Antidotes - PC Cleaner & Optimizer',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.buildLightTheme(themeController.accentColor),
+            darkTheme: AppTheme.buildDarkTheme(themeController.accentColor),
+            themeMode:
+                themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: const MainShellScreen(),
+          ),
         );
       },
     );

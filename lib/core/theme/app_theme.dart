@@ -5,6 +5,9 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData buildDarkTheme(Color accentColor) {
+    final onAccentColor =
+        accentColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: const Color(0xFF0B0F19),
@@ -14,7 +17,7 @@ class AppTheme {
         secondary: AppColors.secondary,
         surface: const Color(0xFF131C2E),
         error: AppColors.danger,
-        onPrimary: Colors.black,
+        onPrimary: onAccentColor,
         onSecondary: Colors.white,
         onSurface: const Color(0xFFF8FAFC),
         outline: const Color(0xFF2E3D56),
@@ -31,7 +34,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: accentColor,
-          foregroundColor: Colors.black,
+          foregroundColor: onAccentColor,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
@@ -61,6 +64,9 @@ class AppTheme {
   }
 
   static ThemeData buildLightTheme(Color accentColor) {
+    final onAccentColor =
+        accentColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+
     return ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: const Color(0xFFF1F5F9),
@@ -70,7 +76,7 @@ class AppTheme {
         secondary: AppColors.secondary,
         surface: const Color(0xFFFFFFFF),
         error: AppColors.danger,
-        onPrimary: Colors.white,
+        onPrimary: onAccentColor,
         onSecondary: Colors.black,
         onSurface: const Color(0xFF0F172A),
         outline: const Color(0xFFCBD5E1),
@@ -87,7 +93,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: accentColor,
-          foregroundColor: Colors.white,
+          foregroundColor: onAccentColor,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(

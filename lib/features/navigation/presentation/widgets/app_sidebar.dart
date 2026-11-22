@@ -130,6 +130,13 @@ class AppSidebar extends StatelessWidget {
                   isSelected: selectedIndex == 1,
                   onTap: () => onDestinationSelected(1),
                 ),
+                const SizedBox(height: 6),
+                _SidebarItem(
+                  icon: Icons.travel_explore_rounded,
+                  label: 'Browser Cleaner',
+                  isSelected: selectedIndex == 2,
+                  onTap: () => onDestinationSelected(2),
+                ),
               ],
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_scope.dart';
 import '../../../../core/utils/file_size_formatter.dart';
 import '../controllers/junk_cleaner_controller.dart';
 import '../widgets/category_tile.dart';
@@ -82,6 +83,7 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppThemeScope.of(context);
     final isBusy = _controller.isScanning || _controller.isCleaning;
 
     return Scaffold(
@@ -162,8 +164,8 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
                   ),
                 ],
               ),
-              child: Icon(Icons.cleaning_services_rounded,
-                  color: AppColors.background, size: 28),
+              child: const Icon(Icons.cleaning_services_rounded,
+                  color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
             Column(

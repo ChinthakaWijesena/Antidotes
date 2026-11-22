@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:system_theme/system_theme.dart';
@@ -6,30 +7,44 @@ import '../constants/app_colors.dart';
 class SystemThemeController extends ChangeNotifier with WidgetsBindingObserver {
   Color _accentColor = const Color(0xFF00D2C4);
   bool _isDarkMode = true;
+  Timer? _pollingTimer;
 
   Color get accentColor => _accentColor;
   bool get isDarkMode => _isDarkMode;
 
   Future<void> initialize() async {
     WidgetsBinding.instance.addObserver(this);
-    _updateBrightness();
+
+    // Initial detection from Windows Registry & Platform
+    await _updateThemeFromSystem();
 
     if (Platform.isWindows) {
       try {
         SystemTheme.fallbackColor = const Color(0xFF00D2C4);
         await SystemTheme.accentColor.load();
-        _accentColor = SystemTheme.accentColor.accent;
+        if (SystemTheme.accentColor.accent != Colors.transparent) {
+          _accentColor = SystemTheme.accentColor.accent;
+        }
 
         // Listen for live Windows system theme & accent color changes
         SystemTheme.onChange.listen((color) {
-          _accentColor = color.accent;
-          AppColors.updateTheme(_isDarkMode, _accentColor);
-          notifyListeners();
+          if (color.accent != Colors.transparent) {
+            _accentColor = color.accent;
+            AppColors.updateTheme(_isDarkMode, _accentColor);
+            notifyListeners();
+          }
         });
       } catch (_) {
-        // Fallback: Read directly from Windows Registry
-        _accentColor = await _getAccentColorFromRegistry() ?? const Color(0xFF00D2C4);
+        final regAccent = await _getAccentColorFromRegistry();
+        if (regAccent != null) _accentColor = regAccent;
       }
+
+      // Check registry periodically to detect Windows Settings Dark/Light switches live
+      _pollingTimer?.cancel();
+      _pollingTimer = Timer.periodic(
+        const Duration(milliseconds: 800),
+        (_) => _updateThemeFromSystem(),
+      );
     }
 
     AppColors.updateTheme(_isDarkMode, _accentColor);
@@ -38,15 +53,69 @@ class SystemThemeController extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void didChangePlatformBrightness() {
-    _updateBrightness();
-    AppColors.updateTheme(_isDarkMode, _accentColor);
-    notifyListeners();
+    _updateThemeFromSystem();
   }
 
-  void _updateBrightness() {
-    final brightness =
-        WidgetsBinding.instance.platformDispatcher.platformBrightness;
-    _isDarkMode = brightness == Brightness.dark;
+  Future<void> _updateThemeFromSystem() async {
+    bool changed = false;
+
+    if (Platform.isWindows) {
+      final regIsDark = await _getIsDarkFromRegistry();
+      if (regIsDark != null) {
+        if (regIsDark != _isDarkMode) {
+          _isDarkMode = regIsDark;
+          changed = true;
+        }
+      } else {
+        final brightness =
+            WidgetsBinding.instance.platformDispatcher.platformBrightness;
+        final isDark = brightness == Brightness.dark;
+        if (isDark != _isDarkMode) {
+          _isDarkMode = isDark;
+          changed = true;
+        }
+      }
+
+      final regAccent = await _getAccentColorFromRegistry();
+      if (regAccent != null && regAccent != _accentColor) {
+        _accentColor = regAccent;
+        changed = true;
+      }
+    } else {
+      final brightness =
+          WidgetsBinding.instance.platformDispatcher.platformBrightness;
+      final isDark = brightness == Brightness.dark;
+      if (isDark != _isDarkMode) {
+        _isDarkMode = isDark;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      AppColors.updateTheme(_isDarkMode, _accentColor);
+      notifyListeners();
+    }
+  }
+
+  Future<bool?> _getIsDarkFromRegistry() async {
+    try {
+      final res = await Process.run('reg.exe', [
+        'query',
+        r'HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize',
+        '/v',
+        'AppsUseLightTheme',
+      ]);
+      if (res.exitCode == 0) {
+        final out = res.stdout as String;
+        final match = RegExp(r'0x([0-9a-fA-F]+)').firstMatch(out);
+        if (match != null) {
+          final val = int.parse(match.group(1)!, radix: 16);
+          // 0 = Dark Mode, 1 = Light Mode
+          return val == 0;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<Color?> _getAccentColorFromRegistry() async {
@@ -76,6 +145,7 @@ class SystemThemeController extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _pollingTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

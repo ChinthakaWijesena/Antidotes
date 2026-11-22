@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_scope.dart';
 import '../../data/models/startup_app_item.dart';
 import '../controllers/startup_manager_controller.dart';
 
@@ -145,6 +146,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppThemeScope.of(context);
     final apps = _controller.filteredApps;
     final selected = _controller.selectedItem;
 

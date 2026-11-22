@@ -46,8 +46,8 @@ class AppColors {
       surfaceBorder = const Color(0xFFCBD5E1);
 
       textPrimary = const Color(0xFF0F172A);
-      textSecondary = const Color(0xFF475569);
-      textMuted = const Color(0xFF94A3B8);
+      textSecondary = const Color(0xFF334155);
+      textMuted = const Color(0xFF64748B);
     }
   }
 }
