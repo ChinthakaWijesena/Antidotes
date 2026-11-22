@@ -7,6 +7,7 @@ import 'package:antidotes/features/junk_cleaner/presentation/screens/junk_cleane
 import 'package:antidotes/features/software_installer/presentation/screens/software_installer_screen.dart';
 import 'package:antidotes/features/software_uninstaller/presentation/screens/software_uninstaller_screen.dart';
 import 'package:antidotes/features/startup_manager/presentation/screens/startup_manager_screen.dart';
+import 'package:antidotes/features/windows_settings/presentation/screens/windows_settings_screen.dart';
 import '../widgets/app_sidebar.dart';
 
 class MainShellScreen extends StatefulWidget {
@@ -65,6 +66,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 SoftwareUninstallerScreen(
                   key: ValueKey(
                       'uninstaller_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+                WindowsSettingsScreen(
+                  key: ValueKey(
+                      'windows_settings_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
                 ),
               ],
             ),

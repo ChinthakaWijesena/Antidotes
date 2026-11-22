@@ -51,6 +51,14 @@ class SystemThemeController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  void setDarkMode(bool isDark) {
+    if (_isDarkMode != isDark) {
+      _isDarkMode = isDark;
+      AppColors.updateTheme(_isDarkMode, _accentColor);
+      notifyListeners();
+    }
+  }
+
   @override
   void didChangePlatformBrightness() {
     _updateThemeFromSystem();

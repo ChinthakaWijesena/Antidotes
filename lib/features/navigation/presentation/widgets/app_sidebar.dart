@@ -158,6 +158,13 @@ class AppSidebar extends StatelessWidget {
                   isSelected: selectedIndex == 5,
                   onTap: () => onDestinationSelected(5),
                 ),
+                const SizedBox(height: 6),
+                _SidebarItem(
+                  icon: Icons.tune_rounded,
+                  label: 'Windows Settings',
+                  isSelected: selectedIndex == 6,
+                  onTap: () => onDestinationSelected(6),
+                ),
               ],
             ),
           ),
