@@ -64,7 +64,7 @@ class ScanProgressCard extends StatelessWidget {
               currentPath,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Consolas',
                 color: AppColors.textMuted,
                 fontSize: 12,

@@ -66,7 +66,7 @@ class StartupAppTile extends StatelessWidget {
                     Flexible(
                       child: Text(
                         item.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -82,20 +82,20 @@ class StartupAppTile extends StatelessWidget {
                   children: [
                     Text(
                       item.publisher,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text('•', style: TextStyle(color: AppColors.textMuted)),
+                    Text('•', style: TextStyle(color: AppColors.textMuted)),
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
                         item.command,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Consolas',
                           color: AppColors.textMuted,
                           fontSize: 11,
@@ -137,7 +137,7 @@ class StartupAppTile extends StatelessWidget {
       ),
       child: Text(
         location,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.textMuted,
           fontSize: 10,
           fontWeight: FontWeight.w500,

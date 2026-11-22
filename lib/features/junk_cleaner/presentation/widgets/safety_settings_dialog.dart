@@ -41,7 +41,7 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.surfaceBorder),
+        side: BorderSide(color: AppColors.surfaceBorder),
       ),
       child: Container(
         width: 600,
@@ -54,9 +54,9 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
-                  children: const [
+                  children: [
                     Icon(Icons.security_rounded, color: AppColors.primary, size: 24),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Text(
                       'Cleaner Safety & Rules',
                       style: TextStyle(
@@ -68,13 +68,13 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                  icon: Icon(Icons.close, color: AppColors.textSecondary),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Customize safeguard filters, exclusions, and file protection policies.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
@@ -88,7 +88,7 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
                   // Safety switches
                   SwitchListTile(
                     title: const Text('Ignore files modified in last 24 hours'),
-                    subtitle: const Text(
+                    subtitle: Text(
                       'Recommended. Prevents deleting active cache files currently written by running software.',
                       style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                     ),
@@ -101,7 +101,7 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
 
                   SwitchListTile(
                     title: const Text('Send files to Windows Recycle Bin'),
-                    subtitle: const Text(
+                    subtitle: Text(
                       'Allows undoing deletions instead of permanent file removal (uses SHFileOperation).',
                       style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                     ),
@@ -114,7 +114,7 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
 
                   SwitchListTile(
                     title: const Text('Include *.log files (Medium Risk)'),
-                    subtitle: const Text(
+                    subtitle: Text(
                       'Application logs. Some active services or developer tools use these.',
                       style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                     ),
@@ -140,7 +140,7 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
 
                   // Exclude Folders
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Excluded Folders (Whitelist)',
                     style: TextStyle(
                       color: AppColors.textPrimary,
@@ -156,14 +156,14 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
                           controller: _excludeFolderController,
                           decoration: InputDecoration(
                             hintText: 'e.g. C:\\Users\\Name\\Desktop\\MyWork',
-                            hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                            hintStyle: TextStyle(fontSize: 12, color: AppColors.textMuted),
                             filled: true,
                             fillColor: AppColors.surfaceLight,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: AppColors.surfaceBorder),
+                              borderSide: BorderSide(color: AppColors.surfaceBorder),
                             ),
                           ),
                         ),
@@ -205,7 +205,7 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
 
                   // Exclude Patterns
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Excluded File Patterns',
                     style: TextStyle(
                       color: AppColors.textPrimary,
@@ -221,14 +221,14 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
                           controller: _excludePatternController,
                           decoration: InputDecoration(
                             hintText: 'e.g. *.keep, project_*.tmp',
-                            hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                            hintStyle: TextStyle(fontSize: 12, color: AppColors.textMuted),
                             filled: true,
                             fillColor: AppColors.surfaceLight,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: AppColors.surfaceBorder),
+                              borderSide: BorderSide(color: AppColors.surfaceBorder),
                             ),
                           ),
                         ),
@@ -285,7 +285,7 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text(
                                 'Looking for Windows.old cleanup?',
                                 style: TextStyle(
@@ -294,7 +294,7 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
                                   color: AppColors.textPrimary,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
                                 'Windows.old should never be deleted manually. Launch Microsoft Disk Cleanup (cleanmgr) for safe removal.',
                                 style: TextStyle(

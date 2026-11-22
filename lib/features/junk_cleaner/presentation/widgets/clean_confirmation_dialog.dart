@@ -65,7 +65,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.surfaceBorder),
+        side: BorderSide(color: AppColors.surfaceBorder),
       ),
       child: Container(
         width: 620,
@@ -82,7 +82,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
                     color: AppColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.checklist_rounded,
+                  child: Icon(Icons.checklist_rounded,
                       color: AppColors.primary, size: 24),
                 ),
                 const SizedBox(width: 14),
@@ -90,7 +90,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Confirm Items to Clean',
                         style: TextStyle(
                           color: AppColors.textPrimary,
@@ -100,7 +100,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
                       ),
                       Text(
                         'Total: ${FileSizeFormatter.format(selectedBytes)} ($selectedCount items)',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
                         ),
@@ -142,7 +142,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
               const SizedBox(height: 12),
             ],
 
-            const Text(
+            Text(
               'Selected Categories & Files preview:',
               style: TextStyle(
                 color: AppColors.textPrimary,
@@ -212,7 +212,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
               Expanded(
                 child: Text(
                   cat.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -221,7 +221,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
               ),
               Text(
                 FileSizeFormatter.format(cat.totalBytes),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                 ),
@@ -257,7 +257,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
               item.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Consolas',
                 fontSize: 11,
                 color: AppColors.textSecondary,
@@ -267,7 +267,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
           const SizedBox(width: 8),
           Text(
             FileSizeFormatter.format(item.sizeInBytes),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               color: AppColors.textMuted,
             ),

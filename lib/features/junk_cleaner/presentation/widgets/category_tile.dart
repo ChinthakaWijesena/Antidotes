@@ -87,7 +87,7 @@ class _CategoryTileState extends State<CategoryTile> {
                           Flexible(
                             child: Text(
                               cat.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -117,7 +117,7 @@ class _CategoryTileState extends State<CategoryTile> {
                       const SizedBox(height: 2),
                       Text(
                         cat.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
                         ),
@@ -167,7 +167,7 @@ class _CategoryTileState extends State<CategoryTile> {
                         cat.isRecycleBin
                             ? '${cat.fileCount} items'
                             : '${cat.fileCount} files',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 11,
                         ),
@@ -230,7 +230,7 @@ class _CategoryTileState extends State<CategoryTile> {
                         child: Text(
                           item.name,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                             fontFamily: 'Consolas',
@@ -262,7 +262,7 @@ class _CategoryTileState extends State<CategoryTile> {
                       const SizedBox(width: 12),
                       Text(
                         FileSizeFormatter.format(item.sizeInBytes),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 11,
                         ),

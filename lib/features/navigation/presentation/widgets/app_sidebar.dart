@@ -15,7 +15,7 @@ class AppSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 250,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(
           right: BorderSide(color: AppColors.surfaceBorder, width: 1),
@@ -53,7 +53,7 @@ class AppSidebar extends StatelessWidget {
                     child: Image.asset(
                       'assets/icons/app_logo.png',
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
+                      errorBuilder: (context, error, stackTrace) => Icon(
                         Icons.shield_rounded,
                         color: AppColors.primary,
                       ),
@@ -64,7 +64,7 @@ class AppSidebar extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Antidotes',
                       style: TextStyle(
                         color: AppColors.textPrimary,
@@ -79,7 +79,7 @@ class AppSidebar extends StatelessWidget {
                         color: AppColors.primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
+                      child: Text(
                         'PC OPTIMIZER',
                         style: TextStyle(
                           color: AppColors.primary,
@@ -105,8 +105,8 @@ class AppSidebar extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 12, bottom: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12, bottom: 8),
                   child: Text(
                     'TOOLS & MODULES',
                     style: TextStyle(
@@ -160,7 +160,7 @@ class AppSidebar extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Text(
                         'Protection Active',
                         style: TextStyle(

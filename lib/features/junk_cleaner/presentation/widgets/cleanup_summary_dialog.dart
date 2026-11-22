@@ -14,7 +14,7 @@ class CleanupSummaryDialog extends StatelessWidget {
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: AppColors.surfaceBorder),
+        side: BorderSide(color: AppColors.surfaceBorder),
       ),
       child: Container(
         width: 440,
@@ -32,7 +32,7 @@ class CleanupSummaryDialog extends StatelessWidget {
                   color: AppColors.success, size: 48),
             ),
             const SizedBox(height: 18),
-            const Text(
+            Text(
               'Cleanup Complete!',
               style: TextStyle(
                 color: AppColors.textPrimary,
@@ -44,7 +44,7 @@ class CleanupSummaryDialog extends StatelessWidget {
             Text(
               'You reclaimed ${FileSizeFormatter.format(result.bytesFreed)} of disk space.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
               ),
@@ -117,7 +117,7 @@ class _SummaryRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
         ),
         Text(
           value,

@@ -1,22 +1,34 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/system_theme_controller.dart';
 import 'features/navigation/presentation/screens/main_shell_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const AntidotesApp());
+  final themeController = SystemThemeController();
+  await themeController.initialize();
+  runApp(AntidotesApp(themeController: themeController));
 }
 
 class AntidotesApp extends StatelessWidget {
-  const AntidotesApp({super.key});
+  final SystemThemeController themeController;
+
+  const AntidotesApp({super.key, required this.themeController});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Antidotes - PC Cleaner & Optimizer',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      home: const MainShellScreen(),
+    return ListenableBuilder(
+      listenable: themeController,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Antidotes - PC Cleaner & Optimizer',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.buildLightTheme(themeController.accentColor),
+          darkTheme: AppTheme.buildDarkTheme(themeController.accentColor),
+          themeMode: ThemeMode.system,
+          home: const MainShellScreen(),
+        );
+      },
     );
   }
 }

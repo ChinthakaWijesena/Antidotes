@@ -41,17 +41,17 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.surfaceBorder),
+          side: BorderSide(color: AppColors.surfaceBorder),
         ),
         title: Row(
           children: [
-            const Icon(Icons.info_outline_rounded,
+            Icon(Icons.info_outline_rounded,
                 color: AppColors.primary, size: 24),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 item.name,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -80,7 +80,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
                 _propRow('Task ID', item.taskId),
                 const SizedBox(height: 10),
               ],
-              const Text(
+              Text(
                 'Command Line / Target:',
                 style: TextStyle(
                     color: AppColors.textSecondary,
@@ -98,7 +98,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
                 ),
                 child: SelectableText(
                   item.command,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Consolas',
                     fontSize: 11,
                     color: AppColors.textPrimary,
@@ -126,13 +126,13 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
           width: 130,
           child: Text(
             label,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -182,7 +182,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
                         child: _controller.isLoading
                             ? const Center(child: CircularProgressIndicator())
                             : apps.isEmpty
-                                ? const Center(
+                                ? Center(
                                     child: Text(
                                       'No matching startup apps found',
                                       style: TextStyle(
@@ -211,14 +211,14 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
                 children: [
                   Text(
                     '${_controller.totalApps} startup apps (${_controller.enabledApps} enabled, ${_controller.disabledApps} disabled)',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 12,
                     ),
                   ),
                   Text(
                     'Task Manager Compatible Engine',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 11,
                     ),
@@ -236,7 +236,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
+        Text(
           'Startup apps',
           style: TextStyle(
             color: AppColors.textPrimary,
@@ -256,8 +256,8 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
             decoration: InputDecoration(
               hintText: 'Type a name, publisher, or command to search',
               hintStyle:
-                  const TextStyle(color: AppColors.textMuted, fontSize: 12),
-              prefixIcon: const Icon(Icons.search_rounded,
+                  TextStyle(color: AppColors.textMuted, fontSize: 12),
+              prefixIcon: Icon(Icons.search_rounded,
                   size: 18, color: AppColors.textSecondary),
               filled: true,
               fillColor: AppColors.surface,
@@ -265,11 +265,11 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
               contentPadding: const EdgeInsets.symmetric(vertical: 8),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: AppColors.surfaceBorder),
+                borderSide: BorderSide(color: AppColors.surfaceBorder),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: AppColors.surfaceBorder),
+                borderSide: BorderSide(color: AppColors.surfaceBorder),
               ),
             ),
           ),
@@ -347,12 +347,12 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.speed_rounded,
+              Icon(Icons.speed_rounded,
                   size: 16, color: AppColors.primary),
               const SizedBox(width: 8),
               Text(
                 'Last BIOS time: ${_controller.biosTime}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -368,9 +368,9 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
   Widget _buildTableHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
         ),
@@ -409,7 +409,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -442,7 +442,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
               ? AppColors.primary.withValues(alpha: 0.12)
               : Colors.transparent,
           border: Border(
-            bottom: const BorderSide(color: AppColors.surfaceBorder, width: 0.5),
+            bottom: BorderSide(color: AppColors.surfaceBorder, width: 0.5),
             left: BorderSide(
               color: isSelected ? AppColors.primary : Colors.transparent,
               width: 3,
@@ -483,7 +483,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
                 item.publisher,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                 ),

@@ -148,7 +148,7 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   colors: [AppColors.primary, AppColors.secondary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -162,13 +162,13 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.cleaning_services_rounded,
+              child: Icon(Icons.cleaning_services_rounded,
                   color: AppColors.background, size: 28),
             ),
             const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'Antidotes Junk Cleaner',
                   style: TextStyle(
@@ -178,7 +178,7 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
                     letterSpacing: -0.5,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   'Strict whitelist scanning, pattern-based risk assessment & safe deletion',
                   style: TextStyle(
@@ -262,7 +262,7 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
+        Text(
           'Target Locations & Categories',
           style: TextStyle(
             color: AppColors.textPrimary,
@@ -285,7 +285,7 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
               ),
               label: Text(
                 _controller.allSelected ? 'Deselect All' : 'Select All',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 13,
                 ),

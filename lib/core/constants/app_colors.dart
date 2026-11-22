@@ -3,25 +3,51 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Background & Surfaces
-  static const Color background = Color(0xFF0B0F19);
-  static const Color surface = Color(0xFF131C2E);
-  static const Color surfaceLight = Color(0xFF1E293B);
-  static const Color surfaceBorder = Color(0xFF2E3D56);
-
-  // Brand & Accents
-  static const Color primary = Color(0xFF00D2C4);
-  static const Color primaryGlow = Color(0x3300D2C4);
+  // Dynamic Brand & Accents (Driven by Windows System Accent Color)
+  static Color primary = const Color(0xFF00D2C4);
+  static Color primaryGlow = const Color(0x3300D2C4);
   static const Color secondary = Color(0xFF6366F1);
   static const Color accent = Color(0xFF38BDF8);
+
+  // Dynamic Background & Surfaces (Driven by Windows Dark/Light mode)
+  static Color background = const Color(0xFF0B0F19);
+  static Color surface = const Color(0xFF131C2E);
+  static Color surfaceLight = const Color(0xFF1E293B);
+  static Color surfaceBorder = const Color(0xFF2E3D56);
 
   // Status colors
   static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);
   static const Color danger = Color(0xFFEF4444);
 
-  // Text colors
-  static const Color textPrimary = Color(0xFFF8FAFC);
-  static const Color textSecondary = Color(0xFF94A3B8);
-  static const Color textMuted = Color(0xFF64748B);
+  // Dynamic Text colors
+  static Color textPrimary = const Color(0xFFF8FAFC);
+  static Color textSecondary = const Color(0xFF94A3B8);
+  static Color textMuted = const Color(0xFF64748B);
+
+  /// Updates all color palettes dynamically when Windows theme or accent color changes
+  static void updateTheme(bool isDark, Color systemAccent) {
+    primary = systemAccent;
+    primaryGlow = systemAccent.withValues(alpha: 0.25);
+
+    if (isDark) {
+      background = const Color(0xFF0B0F19);
+      surface = const Color(0xFF131C2E);
+      surfaceLight = const Color(0xFF1E293B);
+      surfaceBorder = const Color(0xFF2E3D56);
+
+      textPrimary = const Color(0xFFF8FAFC);
+      textSecondary = const Color(0xFF94A3B8);
+      textMuted = const Color(0xFF64748B);
+    } else {
+      background = const Color(0xFFF1F5F9);
+      surface = const Color(0xFFFFFFFF);
+      surfaceLight = const Color(0xFFF8FAFC);
+      surfaceBorder = const Color(0xFFCBD5E1);
+
+      textPrimary = const Color(0xFF0F172A);
+      textSecondary = const Color(0xFF475569);
+      textMuted = const Color(0xFF94A3B8);
+    }
+  }
 }

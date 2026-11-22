@@ -6,7 +6,7 @@ class StatsCard extends StatelessWidget {
   final String value;
   final String subtitle;
   final IconData icon;
-  final Color iconColor;
+  final Color? iconColor;
 
   const StatsCard({
     super.key,
@@ -14,11 +14,13 @@ class StatsCard extends StatelessWidget {
     required this.value,
     required this.subtitle,
     required this.icon,
-    this.iconColor = AppColors.primary,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = iconColor ?? AppColors.primary;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -32,10 +34,10 @@ class StatsCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
+                color: effectiveColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: iconColor, size: 28),
+              child: Icon(icon, color: effectiveColor, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -45,7 +47,7 @@ class StatsCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -54,7 +56,7 @@ class StatsCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -64,7 +66,7 @@ class StatsCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 12,
                     ),
