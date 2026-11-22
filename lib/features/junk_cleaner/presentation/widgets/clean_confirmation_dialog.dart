@@ -7,12 +7,14 @@ import '../../data/models/junk_pattern.dart';
 
 class CleanConfirmationDialog extends StatefulWidget {
   final List<JunkCategory> categories;
-  final VoidCallback onConfirm;
+  final Function(bool createRestorePoint) onConfirm;
+  final bool initialCreateRestorePoint;
 
   const CleanConfirmationDialog({
     super.key,
     required this.categories,
     required this.onConfirm,
+    this.initialCreateRestorePoint = true,
   });
 
   @override
@@ -20,6 +22,13 @@ class CleanConfirmationDialog extends StatefulWidget {
 }
 
 class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
+  late bool _createRestorePoint;
+
+  @override
+  void initState() {
+    super.initState();
+    _createRestorePoint = widget.initialCreateRestorePoint;
+  }
   int get selectedBytes {
     var total = 0;
     for (final cat in widget.categories) {
@@ -171,7 +180,73 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
               ),
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
+
+            // System Restore Point Selection Option
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: _createRestorePoint
+                    ? AppColors.primary.withValues(alpha: 0.08)
+                    : AppColors.surfaceLight.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _createRestorePoint
+                      ? AppColors.primary.withValues(alpha: 0.4)
+                      : AppColors.surfaceBorder,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Checkbox(
+                    value: _createRestorePoint,
+                    activeColor: AppColors.primary,
+                    checkColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    onChanged: (val) {
+                      setState(() {
+                        _createRestorePoint = val ?? true;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.settings_backup_restore_rounded,
+                    color: _createRestorePoint
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Create a System Restore Point before proceeding (Recommended)',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          'Allows you to undo system file and configuration changes using Windows System Restore.',
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -185,7 +260,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
                       ? null
                       : () {
                           Navigator.of(context).pop();
-                          widget.onConfirm();
+                          widget.onConfirm(_createRestorePoint);
                         },
                   icon: const Icon(Icons.delete_forever_rounded, size: 18),
                   label: Text(

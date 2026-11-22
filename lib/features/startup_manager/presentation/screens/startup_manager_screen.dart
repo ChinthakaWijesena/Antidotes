@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/services/system_restore_service.dart';
 import '../../../../core/theme/app_theme_scope.dart';
 import '../../data/models/startup_app_item.dart';
 import '../controllers/startup_manager_controller.dart';
@@ -117,6 +118,108 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _promptCreateRestorePoint() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: AppColors.surfaceBorder),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.settings_backup_restore_rounded,
+                color: AppColors.primary, size: 24),
+            const SizedBox(width: 10),
+            Text(
+              'Create System Restore Point',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 440,
+          child: Text(
+            'Creating a Windows Restore Point creates a system snapshot before you enable or disable startup programs.\n\nWould you like to create one now?',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          ),
+        ),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Create Point'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: AppColors.surfaceBorder),
+          ),
+          content: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    'Creating System Restore Point...\nPlease approve UAC if prompted.',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final srService = SystemRestoreService();
+      final res = await srService.createRestorePoint(
+        'Antidotes - Startup Apps (${DateTime.now().toString().split('.')[0]})',
+      );
+
+      if (mounted) {
+        Navigator.of(context).pop(); // dismiss loading
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res.message),
+            backgroundColor:
+                res.isSuccess ? AppColors.success : AppColors.warning,
+          ),
+        );
+      }
+    }
   }
 
   Widget _propRow(String label, String value) {
@@ -326,6 +429,21 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
           label: const Text('Properties'),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          ),
+        ),
+        const SizedBox(width: 8),
+
+        // Create System Restore Point Button
+        Tooltip(
+          message:
+              'Create a Windows System Restore Point before modifying apps',
+          child: OutlinedButton.icon(
+            onPressed: _promptCreateRestorePoint,
+            icon: const Icon(Icons.settings_backup_restore_rounded, size: 16),
+            label: const Text('Restore Point'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
           ),
         ),
         const SizedBox(width: 8),

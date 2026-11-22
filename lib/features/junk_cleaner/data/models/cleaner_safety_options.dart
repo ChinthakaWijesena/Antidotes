@@ -23,6 +23,9 @@ class CleanerSafetyOptions {
   /// Clean Windows Update cache (SoftwareDistribution\Download)
   bool cleanWindowsUpdateCache;
 
+  /// Ask user to create a Windows System Restore Point before critical cleaning operations
+  bool askCreateRestorePoint;
+
   CleanerSafetyOptions({
     this.ignoreRecent24Hours = true,
     this.sendToRecycleBin = false,
@@ -32,6 +35,7 @@ class CleanerSafetyOptions {
     this.includeLogs = false,
     this.includeBackups = false,
     this.cleanWindowsUpdateCache = false,
+    this.askCreateRestorePoint = true,
   })  : excludeFolders = excludeFolders ?? [],
         excludePatterns = excludePatterns ?? [];
 
@@ -45,6 +49,7 @@ class CleanerSafetyOptions {
       includeLogs: includeLogs,
       includeBackups: includeBackups,
       cleanWindowsUpdateCache: cleanWindowsUpdateCache,
+      askCreateRestorePoint: askCreateRestorePoint,
     );
   }
 }

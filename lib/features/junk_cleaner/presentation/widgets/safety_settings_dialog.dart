@@ -113,6 +113,20 @@ class _SafetySettingsDialogState extends State<SafetySettingsDialog> {
                   const Divider(),
 
                   SwitchListTile(
+                    title: const Text('Ask to create Windows System Restore Point'),
+                    subtitle: Text(
+                      'Prompts to create a System Restore snapshot before proceeding with critical operations.',
+                      style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                    ),
+                    value: _options.askCreateRestorePoint,
+                    activeThumbColor: AppColors.primary,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) =>
+                        setState(() => _options.askCreateRestorePoint = val),
+                  ),
+                  const Divider(),
+
+                  SwitchListTile(
                     title: const Text('Include *.log files (Medium Risk)'),
                     subtitle: Text(
                       'Application logs. Some active services or developer tools use these.',

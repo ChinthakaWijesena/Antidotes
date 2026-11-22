@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/services/system_restore_service.dart';
 import '../../../../core/theme/app_theme_scope.dart';
 import '../../../../core/utils/file_size_formatter.dart';
 import '../controllers/browser_cleaner_controller.dart';
@@ -38,86 +39,206 @@ class _BrowserCleanerScreenState extends State<BrowserCleanerScreen> {
   Future<void> _handleClean() async {
     if (_controller.selectedJunkBytes == 0) return;
 
+    bool createRestorePoint = true;
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: AppColors.surfaceBorder),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.delete_sweep_rounded,
-                color: AppColors.danger, size: 24),
-            const SizedBox(width: 10),
-            Text(
-              'Confirm Browser Cleaning',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        content: SizedBox(
-          width: 450,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: AppColors.surfaceBorder),
+          ),
+          title: Row(
             children: [
+              const Icon(Icons.delete_sweep_rounded,
+                  color: AppColors.danger, size: 24),
+              const SizedBox(width: 10),
               Text(
-                'Are you sure you want to clean selected browser data? This will permanently delete ${FileSizeFormatter.format(_controller.selectedJunkBytes)} across ${_controller.selectedFilesCount} items.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                'Confirm Browser Cleaning',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              const SizedBox(height: 14),
-              if (_controller.runningBrowsersCount > 0) ...[
+            ],
+          ),
+          content: SizedBox(
+            width: 480,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Are you sure you want to clean selected browser data? This will permanently delete ${FileSizeFormatter.format(_controller.selectedJunkBytes)} across ${_controller.selectedFilesCount} items.',
+                  style:
+                      TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
+                const SizedBox(height: 14),
+                if (_controller.runningBrowsersCount > 0) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: AppColors.warning.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber_rounded,
+                            color: AppColors.warning, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '${_controller.runningBrowsersCount} browser(s) are currently running. For best cleaning results, close open browsers or click "Close Browser" first.',
+                            style: TextStyle(
+                                color: AppColors.textPrimary, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // System Restore Point Checkbox
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.warning.withValues(alpha: 0.12),
+                    color: createRestorePoint
+                        ? AppColors.primary.withValues(alpha: 0.08)
+                        : AppColors.surfaceLight.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: AppColors.warning.withValues(alpha: 0.3)),
+                      color: createRestorePoint
+                          ? AppColors.primary.withValues(alpha: 0.35)
+                          : AppColors.surfaceBorder,
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber_rounded,
-                          color: AppColors.warning, size: 20),
-                      const SizedBox(width: 10),
+                      Checkbox(
+                        value: createRestorePoint,
+                        activeColor: AppColors.primary,
+                        checkColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        onChanged: (val) {
+                          setDialogState(() {
+                            createRestorePoint = val ?? true;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(Icons.settings_backup_restore_rounded,
+                          size: 18,
+                          color: createRestorePoint
+                              ? AppColors.primary
+                              : AppColors.textSecondary),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '${_controller.runningBrowsersCount} browser(s) are currently running. For best cleaning results, close open browsers or click "Close Browser" first.',
+                          'Create System Restore Point before cleaning (Recommended)',
                           style: TextStyle(
-                              color: AppColors.textPrimary, fontSize: 12),
+                            color: AppColors.textPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
-            ],
-          ),
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-              foregroundColor: Colors.white,
             ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Proceed & Clean'),
           ),
-        ],
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Proceed & Clean'),
+            ),
+          ],
+        ),
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
+      if (createRestorePoint) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.surfaceBorder),
+            ),
+            content: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Creating System Restore Point...',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Please approve the Windows UAC prompt if displayed.',
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        final srService = SystemRestoreService();
+        await srService.createRestorePoint(
+          'Antidotes - Pre-Browser Clean (${DateTime.now().toString().split('.')[0]})',
+        );
+
+        if (mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+        }
+      }
+
       final res = await _controller.startClean();
       if (res != null && mounted) {
         showDialog(

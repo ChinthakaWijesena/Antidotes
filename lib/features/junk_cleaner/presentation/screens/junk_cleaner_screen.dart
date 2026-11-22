@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/services/system_restore_service.dart';
 import '../../../../core/theme/app_theme_scope.dart';
 import '../../../../core/utils/file_size_formatter.dart';
 import '../controllers/junk_cleaner_controller.dart';
@@ -76,9 +77,126 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
       context: context,
       builder: (_) => CleanConfirmationDialog(
         categories: _controller.categories,
-        onConfirm: () => _controller.startClean(),
+        initialCreateRestorePoint:
+            _controller.safetyOptions.askCreateRestorePoint,
+        onConfirm: (createRestorePoint) async {
+          if (createRestorePoint) {
+            await _createRestorePointAndProceed();
+          } else {
+            _controller.startClean();
+          }
+        },
       ),
     );
+  }
+
+  Future<void> _createRestorePointAndProceed() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: AppColors.surfaceBorder),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Creating System Restore Point...',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Please approve the Windows UAC elevation if prompted.',
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final srService = SystemRestoreService();
+    final result = await srService.createRestorePoint(
+      'Antidotes - Pre-Cleanup (${DateTime.now().toString().split('.')[0]})',
+    );
+
+    if (mounted) {
+      Navigator.of(context).pop(); // dismiss loading dialog
+
+      if (!result.isSuccess && result.status != SystemRestoreStatus.unsupported) {
+        final proceedAnyway = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.surfaceBorder),
+            ),
+            title: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded,
+                    color: AppColors.warning, size: 24),
+                const SizedBox(width: 10),
+                Text(
+                  'Restore Point Incomplete',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              '${result.message}\n\nDo you want to proceed with cleaning anyway?',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+            actions: [
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel Clean'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Proceed Anyway'),
+              ),
+            ],
+          ),
+        );
+
+        if (proceedAnyway != true) return;
+      }
+
+      _controller.startClean();
+    }
   }
 
   @override
