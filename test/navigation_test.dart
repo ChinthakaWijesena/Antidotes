@@ -5,7 +5,7 @@ import 'package:antidotes/features/navigation/presentation/widgets/app_sidebar.d
 
 void main() {
   group('Navigation Models & Hierarchy Tests', () {
-    test('Default topics contains 5 structured categories with 13 subtopics', () {
+    test('Default topics contains 5 structured categories with 14 subtopics', () {
       final topics = NavTopic.defaultTopics;
       expect(topics.length, 5);
 
@@ -16,8 +16,8 @@ void main() {
 
       expect(topics[1].id, 'system_hardware');
       expect(topics[1].title, 'SYSTEM & HARDWARE');
-      expect(topics[1].items.length, 2);
-      expect(topics[1].items.map((i) => i.index), [3, 6]);
+      expect(topics[1].items.length, 3);
+      expect(topics[1].items.map((i) => i.index), [3, 6, 13]);
 
       expect(topics[2].id, 'software_management');
       expect(topics[2].title, 'SOFTWARE MANAGER');
@@ -35,14 +35,14 @@ void main() {
       expect(topics[4].items.map((i) => i.index), [10, 11, 12]);
     });
 
-    test('All 13 subtopic indices (0-12) are uniquely covered', () {
+    test('All 14 subtopic indices are uniquely covered', () {
       final allIndices = NavTopic.defaultTopics
           .expand((topic) => topic.items.map((item) => item.index))
           .toList();
 
-      expect(allIndices.length, 13);
-      expect(allIndices.toSet().length, 13);
-      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+      expect(allIndices.length, 14);
+      expect(allIndices.toSet().length, 14);
+      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
     });
 
     test('NavTopic.forIndex resolves parent topic correctly for each subtopic', () {
@@ -59,6 +59,7 @@ void main() {
       expect(NavTopic.forIndex(10)?.id, 'storage_files'); // Large File Finder
       expect(NavTopic.forIndex(11)?.id, 'storage_files'); // Duplicate Finder
       expect(NavTopic.forIndex(12)?.id, 'storage_files'); // File Shredder
+      expect(NavTopic.forIndex(13)?.id, 'system_hardware'); // Disk Health
       expect(NavTopic.forIndex(99), isNull);
     });
   });
@@ -99,6 +100,7 @@ void main() {
       expect(find.text('Speed Test'), findsOneWidget);
       expect(find.text('RAM Optimizer'), findsOneWidget);
       expect(find.text('Large File Finder'), findsOneWidget);
+      expect(find.text('Disk Health'), findsOneWidget);
 
       // Tap on a subtopic item
       await tester.tap(find.text('Hardware Monitor'));

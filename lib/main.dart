@@ -1,11 +1,24 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_scope.dart';
 import 'core/theme/system_theme_controller.dart';
+import 'core/utils/admin_helper.dart';
 import 'features/navigation/presentation/screens/main_shell_screen.dart';
 
-void main() async {
+void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // In release mode (when opened by user), automatically elevate to Administrator
+  if (Platform.isWindows && kReleaseMode && !args.contains('--no-elevate')) {
+    final isAdmin = await AdminHelper.isRunningAsAdmin();
+    if (!isAdmin) {
+      await AdminHelper.restartAsAdmin();
+      return;
+    }
+  }
+
   final themeController = SystemThemeController();
   await themeController.initialize();
   runApp(AntidotesApp(themeController: themeController));

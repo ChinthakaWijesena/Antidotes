@@ -14,6 +14,7 @@ import 'package:antidotes/features/ram_optimizer/presentation/screens/ram_optimi
 import 'package:antidotes/features/storage_tools/presentation/screens/large_file_finder_screen.dart';
 import 'package:antidotes/features/storage_tools/presentation/screens/duplicate_finder_screen.dart';
 import 'package:antidotes/features/storage_tools/presentation/screens/file_shredder_screen.dart';
+import 'package:antidotes/features/disk_health/presentation/screens/disk_health_screen.dart';
 import '../widgets/app_sidebar.dart';
 
 class MainShellScreen extends StatefulWidget {
@@ -100,6 +101,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 FileShredderScreen(
                   key: ValueKey(
                       'file_shredder_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+                DiskHealthScreen(
+                  key: ValueKey(
+                      'disk_health_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
                 ),
               ],
             ),

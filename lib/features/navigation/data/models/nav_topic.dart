@@ -60,6 +60,12 @@ class NavTopic {
           label: 'Windows Settings',
           icon: Icons.tune_rounded,
         ),
+        NavItem(
+          index: 13,
+          label: 'Disk Health',
+          icon: Icons.storage_rounded,
+          badgeText: 'NEW',
+        ),
       ],
     ),
     NavTopic(
