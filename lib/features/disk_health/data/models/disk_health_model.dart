@@ -206,11 +206,15 @@ class DiskDrive {
       }
     }
 
-    // Derive life remaining from SMART attribute 231 (SSD Life Left) or 177 (Wear Leveling)
-    int? lifeRemaining;
-    final lifeAttr = attrs.where((a) => a.id == 231 || a.id == 177).firstOrNull;
-    if (lifeAttr != null) {
-      lifeRemaining = lifeAttr.value.clamp(0, 100);
+    // Derive life remaining from direct field or SMART attribute 231 / 177
+    int? lifeRemaining = json['LifeRemaining'] != null
+        ? int.tryParse(json['LifeRemaining'].toString())
+        : null;
+    if (lifeRemaining == null) {
+      final lifeAttr = attrs.where((a) => a.id == 231 || a.id == 177).firstOrNull;
+      if (lifeAttr != null) {
+        lifeRemaining = lifeAttr.value.clamp(0, 100);
+      }
     }
 
     // Power-On Hours from attribute 9

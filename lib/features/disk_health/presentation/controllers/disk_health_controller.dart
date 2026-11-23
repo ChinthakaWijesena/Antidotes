@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../../core/utils/admin_helper.dart';
 import '../../data/models/disk_health_model.dart';
 import '../../data/services/disk_health_service.dart';
 
@@ -15,6 +16,7 @@ class DiskHealthController extends ChangeNotifier {
   List<DiskDrive> _drives = [];
   String _errorMessage = '';
   DateTime? _lastRefreshed;
+  bool _isAdmin = false;
 
   // ── Getters ────────────────────────────────────────────────────────────────
 
@@ -22,6 +24,7 @@ class DiskHealthController extends ChangeNotifier {
   List<DiskDrive> get drives => List.unmodifiable(_drives);
   String get errorMessage => _errorMessage;
   DateTime? get lastRefreshed => _lastRefreshed;
+  bool get isAdmin => _isAdmin;
 
   bool get isLoading => _state == DiskHealthLoadState.loading;
   bool get hasData => _drives.isNotEmpty;
@@ -46,6 +49,7 @@ class DiskHealthController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      _isAdmin = await AdminHelper.isRunningAsAdmin();
       final result = await DiskHealthService.instance.fetchAllDrives();
       _drives = result;
       _lastRefreshed = DateTime.now();

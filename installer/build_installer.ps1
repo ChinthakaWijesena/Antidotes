@@ -14,6 +14,9 @@ Write-Host "`n>>> Step 2: Locating Inno Setup Compiler (ISCC.exe)..." -Foregroun
 
 $isccCandidates = @(
     "ISCC.exe",
+    "C:\Program Files\Inno Setup 7\ISCC.exe",
+    "C:\Program Files (x86)\Inno Setup 7\ISCC.exe",
+    "$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",
     "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
     "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
     "C:\Program Files\Inno Setup 6\ISCC.exe"

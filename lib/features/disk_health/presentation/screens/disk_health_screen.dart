@@ -223,8 +223,8 @@ class _DiskHealthScreenState extends State<DiskHealthScreen> {
             critical: _ctrl.criticalCount,
           ),
           const SizedBox(height: 20),
-          // Admin tip if no SMART data
-          if (_ctrl.drives.every((d) => d.smartAttributes.isEmpty))
+          // Admin tip if not admin and no SMART data
+          if (!_ctrl.isAdmin && _ctrl.drives.every((d) => d.smartAttributes.isEmpty))
             _buildAdminTip(),
           // Drive cards
           ...(_ctrl.drives.map((drive) => Padding(

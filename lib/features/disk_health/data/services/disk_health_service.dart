@@ -58,7 +58,52 @@ try {
     # S.M.A.R.T. raw attribute data (temperature, power-on hours, life left)
     $smartAttrs = @()
     $tempVal    = $null
-    if ($diskNum -ne $null) {
+    $lifePct    = $null
+    $powerHours = $null
+
+    # 1. Query StorageReliabilityCounter (Works for NVMe SSDs, SATA, and all modern drives)
+    try {
+      $rel = $pd | Get-StorageReliabilityCounter
+      if ($rel) {
+        if ($rel.Temperature) {
+          $tempVal = [int]$rel.Temperature
+        }
+        if ($rel.Wear -ne $null) {
+          $lifePct = [math]::Max(0, (100 - [int]$rel.Wear))
+        }
+        if ($rel.PowerOnHours -ne $null) {
+          $powerHours = [int]$rel.PowerOnHours
+        }
+        if ($rel.Temperature) {
+          $smartAttrs += [PSCustomObject]@{
+            Id = 194; Name = "Temperature"; Value = [int]$rel.Temperature; Worst = [int]$rel.Temperature; Threshold = 0; RawValue = [int]$rel.Temperature
+          }
+        }
+        if ($lifePct -ne $null) {
+          $smartAttrs += [PSCustomObject]@{
+            Id = 231; Name = "SSD Life Left"; Value = $lifePct; Worst = $lifePct; Threshold = 0; RawValue = $lifePct
+          }
+        }
+        if ($powerHours -ne $null) {
+          $smartAttrs += [PSCustomObject]@{
+            Id = 9; Name = "Power-On Hours"; Value = 100; Worst = 100; Threshold = 0; RawValue = $powerHours
+          }
+        }
+        if ($rel.ReadErrorsTotal -ne $null) {
+          $smartAttrs += [PSCustomObject]@{
+            Id = 1; Name = "Read Error Rate"; Value = 100; Worst = 100; Threshold = 0; RawValue = [int]$rel.ReadErrorsTotal
+          }
+        }
+        if ($rel.WriteErrorsTotal -ne $null) {
+          $smartAttrs += [PSCustomObject]@{
+            Id = 7; Name = "Write Error Rate"; Value = 100; Worst = 100; Threshold = 0; RawValue = [int]$rel.WriteErrorsTotal
+          }
+        }
+      }
+    } catch {}
+
+    # 2. Query ATAPI S.M.A.R.T. (For SATA drives if StorageReliabilityCounter didn't provide attrs)
+    if ($diskNum -ne $null -and $smartAttrs.Count -eq 0) {
       try {
         $smartData = Get-WmiObject -Namespace root\wmi `
                        -Class MSStorageDriver_ATAPISmartData
@@ -129,6 +174,8 @@ try {
       SizeBytes       = $size
       UsedBytes       = $used
       Temperature     = $tempVal
+      LifeRemaining   = $lifePct
+      PowerOnHours    = $powerHours
       PredictFailure  = $predictFail
       SmartAttributes = $smartAttrs
     }
