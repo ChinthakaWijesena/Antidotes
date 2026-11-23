@@ -37,6 +37,12 @@ class NavTopic {
           label: 'Browser Cleaner',
           icon: Icons.travel_explore_rounded,
         ),
+        NavItem(
+          index: 9,
+          label: 'RAM Optimizer',
+          icon: Icons.memory_rounded,
+          badgeText: 'NEW',
+        ),
       ],
     ),
     NavTopic(

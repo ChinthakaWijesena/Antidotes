@@ -5,14 +5,14 @@ import 'package:antidotes/features/navigation/presentation/widgets/app_sidebar.d
 
 void main() {
   group('Navigation Models & Hierarchy Tests', () {
-    test('Default topics contains 4 structured categories with 8 subtopics', () {
+    test('Default topics contains 4 structured categories with 9 subtopics', () {
       final topics = NavTopic.defaultTopics;
       expect(topics.length, 4);
 
       expect(topics[0].id, 'optimization');
       expect(topics[0].title, 'OPTIMIZATION');
-      expect(topics[0].items.length, 3);
-      expect(topics[0].items.map((i) => i.index), [0, 1, 2]);
+      expect(topics[0].items.length, 4); // Junk Cleaner, Startup Optimizer, Browser Cleaner, RAM Optimizer
+      expect(topics[0].items.map((i) => i.index), [0, 1, 2, 9]);
 
       expect(topics[1].id, 'system_hardware');
       expect(topics[1].title, 'SYSTEM & HARDWARE');
@@ -30,20 +30,21 @@ void main() {
       expect(topics[3].items.map((i) => i.index), [7, 8]);
     });
 
-    test('All 9 subtopic indices (0-8) are uniquely covered', () {
+    test('All 10 subtopic indices (0-9) are uniquely covered', () {
       final allIndices = NavTopic.defaultTopics
           .expand((topic) => topic.items.map((item) => item.index))
           .toList();
 
-      expect(allIndices.length, 9);
-      expect(allIndices.toSet().length, 9);
-      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+      expect(allIndices.length, 10);
+      expect(allIndices.toSet().length, 10);
+      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
 
     test('NavTopic.forIndex resolves parent topic correctly for each subtopic', () {
       expect(NavTopic.forIndex(0)?.id, 'optimization'); // Junk Cleaner
       expect(NavTopic.forIndex(1)?.id, 'optimization'); // Startup Optimizer
       expect(NavTopic.forIndex(2)?.id, 'optimization'); // Browser Cleaner
+      expect(NavTopic.forIndex(9)?.id, 'optimization'); // RAM Optimizer
       expect(NavTopic.forIndex(3)?.id, 'system_hardware'); // Hardware Monitor
       expect(NavTopic.forIndex(6)?.id, 'system_hardware'); // Windows Settings
       expect(NavTopic.forIndex(4)?.id, 'software_management'); // Software Installer
@@ -88,6 +89,7 @@ void main() {
       expect(find.text('Software Installer'), findsOneWidget);
       expect(find.text('DNS Changer'), findsOneWidget);
       expect(find.text('Speed Test'), findsOneWidget);
+      expect(find.text('RAM Optimizer'), findsOneWidget);
 
       // Tap on a subtopic item
       await tester.tap(find.text('Hardware Monitor'));

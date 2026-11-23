@@ -33,8 +33,11 @@ class SystemRestoreService {
 
   /// Creates a Windows System Restore Point with the given [description].
   ///
-  /// Tries direct PowerShell execution first. If Administrator privileges are needed,
-  /// it elevates using Windows UAC (-Verb RunAs) so the user can easily approve it.
+  /// Strategy:
+  /// 1. Try direct PowerShell (works if app is already elevated / admin).
+  /// 2. If access denied, write a temporary .ps1 script and launch it
+  ///    via  Start-Process -Verb RunAs  (UAC prompt appears for the user).
+  ///    Result is communicated via a small temp text file.
   Future<SystemRestoreResult> createRestorePoint(String description) async {
     if (!Platform.isWindows) {
       return SystemRestoreResult(
@@ -45,119 +48,197 @@ class SystemRestoreService {
       );
     }
 
-    final sanitizedDesc = description.replaceAll("'", " ");
+    // Sanitise – strip single-quotes so the description can't break PS strings
+    final sanitizedDesc = description.replaceAll("'", ' ').replaceAll('"', ' ');
 
-    // Step 1: Try direct execution (works if app is already running as Administrator)
+    // ── Step 1: direct execution (succeeds when app is running as admin) ──────
+    final directResult = await _tryDirect(sanitizedDesc);
+    if (directResult != null) return directResult;
+
+    // ── Step 2: elevated execution via UAC ────────────────────────────────────
+    return _tryElevated(sanitizedDesc, description);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Private helpers
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /// Attempt to call Checkpoint-Computer without elevation.
+  /// Returns null when we should try elevation instead (access denied / privilege).
+  Future<SystemRestoreResult?> _tryDirect(String sanitizedDesc) async {
     try {
-      final directResult = await Process.run('powershell.exe', [
-        '-NoProfile',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-Command',
-        "try { "
-            "Enable-ComputerRestore -Drive 'C:\\' -ErrorAction SilentlyContinue; "
-            "Checkpoint-Computer -Description '$sanitizedDesc' -RestorePointType 'MODIFY_SETTINGS' -ErrorAction Stop; "
-            "Write-Output 'SUCCESS'; "
-            "} catch { "
-            "Write-Output ('ERROR:' + \$_.Exception.Message); "
-            "}",
-      ]);
+      final result = await Process.run(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-Command',
+          _buildCheckpointCommand(sanitizedDesc, outputMode: 'stdout'),
+        ],
+        runInShell: false,
+      );
 
-      final stdout = directResult.stdout.toString().trim();
-      if (stdout.contains('SUCCESS')) {
+      final out = result.stdout.toString().trim();
+      final err = result.stderr.toString().trim();
+
+      if (out.contains('SUCCESS')) {
         return SystemRestoreResult(
           status: SystemRestoreStatus.success,
           message: 'System Restore Point created successfully.',
-          description: description,
+          description: sanitizedDesc,
           timestamp: DateTime.now(),
         );
       }
 
-      // If error is not a privilege error (e.g. system restore is disabled or frequency throttled)
-      if (stdout.contains('ERROR:') &&
-          !stdout.contains('privilege') &&
-          !stdout.contains('Access is denied') &&
-          !stdout.contains('administrator')) {
-        final errText = stdout.replaceFirst('ERROR:', '').trim();
+      // If the error is NOT a privilege/access error, return failure immediately
+      final combined = '$out $err'.toLowerCase();
+      final isPrivilegeError = combined.contains('access is denied') ||
+          combined.contains('access denied') ||
+          combined.contains('privilege') ||
+          combined.contains('administrator') ||
+          combined.contains('elevation') ||
+          combined.contains('0x80070005');
+
+      if (!isPrivilegeError && (out.contains('ERROR:') || result.exitCode != 0)) {
+        final errText = out.replaceFirst('ERROR:', '').trim();
         return SystemRestoreResult(
           status: SystemRestoreStatus.failed,
-          message: errText.isNotEmpty
-              ? errText
-              : 'Failed to create restore point.',
-          description: description,
+          message: errText.isNotEmpty ? errText : 'Failed to create restore point.',
+          description: sanitizedDesc,
           timestamp: DateTime.now(),
         );
       }
-    } catch (_) {}
 
-    // Step 2: Elevate via Windows UAC (-Verb RunAs)
+      // Privilege error → fall through to Step 2
+      return null;
+    } catch (_) {
+      return null; // fall through to Step 2
+    }
+  }
+
+  /// Launch an elevated PowerShell process via UAC.
+  /// We write a temporary .ps1 file to avoid all escaping problems.
+  Future<SystemRestoreResult> _tryElevated(
+      String sanitizedDesc, String originalDesc) async {
+    final ts = DateTime.now().millisecondsSinceEpoch;
     final tempDir = Directory.systemTemp.path;
-    final resultFile =
-        '$tempDir\\antidotes_sr_${DateTime.now().millisecondsSinceEpoch}.txt';
+    final scriptPath = '$tempDir\\antidotes_sr_$ts.ps1';
+    final resultPath = '$tempDir\\antidotes_sr_${ts}_result.txt';
+
+    // Write the PowerShell script to a temp file – no escaping needed
+    final scriptContent = '''
+\$ErrorActionPreference = "Stop"
+try {
+    Enable-ComputerRestore -Drive "C:\\" -ErrorAction SilentlyContinue
+    # Remove the 24-hour throttle so we can create multiple points per day
+    Set-ItemProperty -Path "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore" `
+        -Name SystemRestorePointCreationFrequency -Value 0 -Type DWord -ErrorAction SilentlyContinue
+    Checkpoint-Computer -Description "$sanitizedDesc" -RestorePointType MODIFY_SETTINGS
+    [IO.File]::WriteAllText("$resultPath", "SUCCESS")
+} catch {
+    [IO.File]::WriteAllText("$resultPath", "ERROR:" + \$_.Exception.Message)
+}
+''';
 
     try {
-      final script =
-          "try { "
-          "Enable-ComputerRestore -Drive 'C:\\' -ErrorAction SilentlyContinue; "
-          "Checkpoint-Computer -Description '$sanitizedDesc' -RestorePointType 'MODIFY_SETTINGS' -ErrorAction Stop; "
-          "[IO.File]::WriteAllText('$resultFile', 'SUCCESS'); "
-          "} catch { "
-          "[IO.File]::WriteAllText('$resultFile', 'ERROR:' + \$_.Exception.Message); "
-          "}";
+      await File(scriptPath).writeAsString(scriptContent);
+    } catch (e) {
+      return SystemRestoreResult(
+        status: SystemRestoreStatus.failed,
+        message: 'Could not write temporary script: $e',
+        description: originalDesc,
+        timestamp: DateTime.now(),
+      );
+    }
 
-      final elevateRes = await Process.run('powershell.exe', [
-        '-NoProfile',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-Command',
-        "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList \"-NoProfile -ExecutionPolicy Bypass -Command `\"$script`\"\"",
-      ]);
+    try {
+      // Launch the script with admin rights
+      final elevateResult = await Process.run(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-Command',
+          'Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden '
+              '-ArgumentList \'-NoProfile -ExecutionPolicy Bypass -File "$scriptPath"\'',
+        ],
+        runInShell: false,
+      );
 
-      final file = File(resultFile);
-      if (await file.exists()) {
-        final content = (await file.readAsString()).trim();
-        try {
-          await file.delete();
-        } catch (_) {}
+      // Clean up script file
+      try { await File(scriptPath).delete(); } catch (_) {}
+
+      final resultFile = File(resultPath);
+      if (await resultFile.exists()) {
+        final content = (await resultFile.readAsString()).trim();
+        try { await resultFile.delete(); } catch (_) {}
 
         if (content == 'SUCCESS') {
           return SystemRestoreResult(
             status: SystemRestoreStatus.success,
             message: 'System Restore Point created successfully.',
-            description: description,
+            description: originalDesc,
             timestamp: DateTime.now(),
           );
-        } else if (content.startsWith('ERROR:')) {
-          final err = content.replaceFirst('ERROR:', '').trim();
+        }
+
+        if (content.startsWith('ERROR:')) {
+          final errMsg = content.replaceFirst('ERROR:', '').trim();
           return SystemRestoreResult(
             status: SystemRestoreStatus.failed,
-            message: err,
-            description: description,
+            message: errMsg.isNotEmpty
+                ? errMsg
+                : 'Could not create restore point. Ensure System Protection is enabled on C:.',
+            description: originalDesc,
             timestamp: DateTime.now(),
           );
         }
       }
 
-      // If result file was not created, user likely declined UAC prompt
-      if (elevateRes.exitCode != 0 || !await file.exists()) {
+      // No result file → user cancelled the UAC prompt
+      if (elevateResult.exitCode != 0) {
         return SystemRestoreResult(
           status: SystemRestoreStatus.cancelled,
-          message:
-              'Administrator permission (UAC) was cancelled or not granted.',
-          description: description,
+          message: 'Administrator permission was not granted (UAC cancelled).',
+          description: originalDesc,
           timestamp: DateTime.now(),
         );
       }
-    } catch (e) {
-      debugPrint('Error creating restore point: $e');
-    }
 
-    return SystemRestoreResult(
-      status: SystemRestoreStatus.failed,
-      message:
-          'Could not create System Restore Point. Make sure System Protection is enabled on drive C:.',
-      description: description,
-      timestamp: DateTime.now(),
-    );
+      // UAC was accepted but result file missing (edge case)
+      return SystemRestoreResult(
+        status: SystemRestoreStatus.cancelled,
+        message: 'Administrator permission was not granted (UAC cancelled).',
+        description: originalDesc,
+        timestamp: DateTime.now(),
+      );
+    } catch (e) {
+      debugPrint('SystemRestoreService elevated error: $e');
+      try { await File(scriptPath).delete(); } catch (_) {}
+      try { await File(resultPath).delete(); } catch (_) {}
+
+      return SystemRestoreResult(
+        status: SystemRestoreStatus.failed,
+        message: 'Could not create System Restore Point. Make sure System Protection is enabled on drive C:.',
+        description: originalDesc,
+        timestamp: DateTime.now(),
+      );
+    }
+  }
+
+  /// Build the inline PowerShell command string for direct (non-elevated) mode.
+  String _buildCheckpointCommand(String desc, {required String outputMode}) {
+    return "\$ErrorActionPreference = 'Stop'; "
+        "try { "
+        "Enable-ComputerRestore -Drive 'C:\\' -ErrorAction SilentlyContinue; "
+        "Set-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore' "
+        "-Name SystemRestorePointCreationFrequency -Value 0 -Type DWord -ErrorAction SilentlyContinue; "
+        "Checkpoint-Computer -Description '$desc' -RestorePointType MODIFY_SETTINGS -ErrorAction Stop; "
+        "Write-Output 'SUCCESS'; "
+        "} catch { "
+        "Write-Output ('ERROR:' + \$_.Exception.Message); "
+        "}";
   }
 }
