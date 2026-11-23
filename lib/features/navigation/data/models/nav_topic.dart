@@ -97,6 +97,31 @@ class NavTopic {
         ),
       ],
     ),
+    NavTopic(
+      id: 'storage_files',
+      title: 'STORAGE & FILES',
+      icon: Icons.folder_special_rounded,
+      items: [
+        NavItem(
+          index: 10,
+          label: 'Large File Finder',
+          icon: Icons.storage_rounded,
+          badgeText: 'NEW',
+        ),
+        NavItem(
+          index: 11,
+          label: 'Duplicate Finder',
+          icon: Icons.copy_all_rounded,
+          badgeText: 'NEW',
+        ),
+        NavItem(
+          index: 12,
+          label: 'File Shredder',
+          icon: Icons.shield_rounded,
+          badgeText: 'NEW',
+        ),
+      ],
+    ),
   ];
 
   /// Finds which topic owns a particular item index

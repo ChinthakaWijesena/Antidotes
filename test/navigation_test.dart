@@ -5,9 +5,9 @@ import 'package:antidotes/features/navigation/presentation/widgets/app_sidebar.d
 
 void main() {
   group('Navigation Models & Hierarchy Tests', () {
-    test('Default topics contains 4 structured categories with 9 subtopics', () {
+    test('Default topics contains 5 structured categories with 13 subtopics', () {
       final topics = NavTopic.defaultTopics;
-      expect(topics.length, 4);
+      expect(topics.length, 5);
 
       expect(topics[0].id, 'optimization');
       expect(topics[0].title, 'OPTIMIZATION');
@@ -28,16 +28,21 @@ void main() {
       expect(topics[3].title, 'NETWORK & TOOLS');
       expect(topics[3].items.length, 2);
       expect(topics[3].items.map((i) => i.index), [7, 8]);
+
+      expect(topics[4].id, 'storage_files');
+      expect(topics[4].title, 'STORAGE & FILES');
+      expect(topics[4].items.length, 3);
+      expect(topics[4].items.map((i) => i.index), [10, 11, 12]);
     });
 
-    test('All 10 subtopic indices (0-9) are uniquely covered', () {
+    test('All 13 subtopic indices (0-12) are uniquely covered', () {
       final allIndices = NavTopic.defaultTopics
           .expand((topic) => topic.items.map((item) => item.index))
           .toList();
 
-      expect(allIndices.length, 10);
-      expect(allIndices.toSet().length, 10);
-      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      expect(allIndices.length, 13);
+      expect(allIndices.toSet().length, 13);
+      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     });
 
     test('NavTopic.forIndex resolves parent topic correctly for each subtopic', () {
@@ -51,6 +56,9 @@ void main() {
       expect(NavTopic.forIndex(5)?.id, 'software_management'); // Software Uninstaller
       expect(NavTopic.forIndex(7)?.id, 'network_tools'); // DNS Changer
       expect(NavTopic.forIndex(8)?.id, 'network_tools'); // Speed Test
+      expect(NavTopic.forIndex(10)?.id, 'storage_files'); // Large File Finder
+      expect(NavTopic.forIndex(11)?.id, 'storage_files'); // Duplicate Finder
+      expect(NavTopic.forIndex(12)?.id, 'storage_files'); // File Shredder
       expect(NavTopic.forIndex(99), isNull);
     });
   });
@@ -90,6 +98,7 @@ void main() {
       expect(find.text('DNS Changer'), findsOneWidget);
       expect(find.text('Speed Test'), findsOneWidget);
       expect(find.text('RAM Optimizer'), findsOneWidget);
+      expect(find.text('Large File Finder'), findsOneWidget);
 
       // Tap on a subtopic item
       await tester.tap(find.text('Hardware Monitor'));

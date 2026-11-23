@@ -11,6 +11,9 @@ import 'package:antidotes/features/windows_settings/presentation/screens/windows
 import 'package:antidotes/features/dns_changer/presentation/screens/dns_changer_screen.dart';
 import 'package:antidotes/features/speed_test/presentation/screens/speed_test_screen.dart';
 import 'package:antidotes/features/ram_optimizer/presentation/screens/ram_optimizer_screen.dart';
+import 'package:antidotes/features/storage_tools/presentation/screens/large_file_finder_screen.dart';
+import 'package:antidotes/features/storage_tools/presentation/screens/duplicate_finder_screen.dart';
+import 'package:antidotes/features/storage_tools/presentation/screens/file_shredder_screen.dart';
 import '../widgets/app_sidebar.dart';
 
 class MainShellScreen extends StatefulWidget {
@@ -85,6 +88,18 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 RamOptimizerScreen(
                   key: ValueKey(
                       'ram_optimizer_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+                LargeFileFinderScreen(
+                  key: ValueKey(
+                      'large_file_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+                DuplicateFinderScreen(
+                  key: ValueKey(
+                      'dup_finder_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                ),
+                FileShredderScreen(
+                  key: ValueKey(
+                      'file_shredder_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
                 ),
               ],
             ),
