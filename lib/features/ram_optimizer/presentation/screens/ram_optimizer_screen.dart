@@ -14,11 +14,8 @@ class RamOptimizerScreen extends StatefulWidget {
   State<RamOptimizerScreen> createState() => _RamOptimizerScreenState();
 }
 
-class _RamOptimizerScreenState extends State<RamOptimizerScreen>
-    with SingleTickerProviderStateMixin {
+class _RamOptimizerScreenState extends State<RamOptimizerScreen> {
   late final RamOptimizerController _ctrl;
-  late final AnimationController _pulseCtrl;
-  late final Animation<double> _pulseAnim;
 
   @override
   void initState() {
@@ -26,23 +23,9 @@ class _RamOptimizerScreenState extends State<RamOptimizerScreen>
     _ctrl = RamOptimizerController();
     _ctrl.addListener(_onCtrlUpdate);
     _ctrl.startMonitoring();
-
-    _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
   }
 
   void _onCtrlUpdate() {
-    if (_ctrl.boostState == RamBoostState.boosting) {
-      _pulseCtrl.repeat(reverse: true);
-    } else {
-      _pulseCtrl.stop();
-      _pulseCtrl.reset();
-    }
     if (mounted) setState(() {});
   }
 
@@ -50,7 +33,6 @@ class _RamOptimizerScreenState extends State<RamOptimizerScreen>
   void dispose() {
     _ctrl.removeListener(_onCtrlUpdate);
     _ctrl.dispose();
-    _pulseCtrl.dispose();
     super.dispose();
   }
 
@@ -257,48 +239,45 @@ class _RamOptimizerScreenState extends State<RamOptimizerScreen>
       ),
       child: Column(
         children: [
-          ScaleTransition(
-            scale: _pulseAnim,
-            child: SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: (isBoosting || noneSelected) ? null : _ctrl.runBoost,
-                icon: isBoosting
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: AppColors.textPrimary,
-                        ),
-                      )
-                    : Icon(Icons.bolt_rounded,
-                        color: AppColors.textPrimary, size: 20),
-                label: Text(
-                  isBoosting
-                      ? 'Optimizing…'
-                      : noneSelected
-                          ? 'Select at least one operation'
-                          : requiresAdmin
-                              ? '⚡  Optimize  (UAC required)'
-                              : '⚡  Optimize RAM',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: (isBoosting || noneSelected) ? null : _ctrl.runBoost,
+              icon: isBoosting
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: AppColors.textPrimary,
+                      ),
+                    )
+                  : Icon(Icons.bolt_rounded,
+                      color: AppColors.textPrimary, size: 20),
+              label: Text(
+                isBoosting
+                    ? 'Optimizing…'
+                    : noneSelected
+                        ? 'Select at least one operation'
+                        : requiresAdmin
+                            ? '⚡  Optimize  (UAC required)'
+                            : '⚡  Optimize RAM',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: noneSelected
-                      ? AppColors.surfaceBorder
-                      : isBoosting
-                          ? AppColors.surfaceBorder
-                          : AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
-                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: noneSelected
+                    ? AppColors.surfaceBorder
+                    : isBoosting
+                        ? AppColors.surfaceBorder
+                        : AppColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+                elevation: 0,
               ),
             ),
           ),
