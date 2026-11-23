@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:antidotes/features/dns_changer/data/models/dns_provider_item.dart';
+import 'package:antidotes/features/dns_changer/data/models/family_shield_test_result.dart';
 import 'package:antidotes/features/dns_changer/data/models/network_interface_item.dart';
 import 'package:antidotes/features/dns_changer/data/services/dns_changer_service.dart';
 
@@ -12,7 +13,13 @@ class DnsChangerController extends ChangeNotifier {
   bool _isLoading = false;
   bool _isApplying = false;
   bool _isTestingLatency = false;
+  bool _isTestingShield = false;
   String _statusMessage = '';
+
+  bool _isBrowserDohBlocked = false;
+  bool _isSafeSearchEnforced = false;
+  bool _preventIpv6Leak = true;
+  FamilyShieldTestResult? _testResult;
 
   DnsChangerController({DnsChangerService? service})
       : _service = service ?? DnsChangerService();
@@ -24,13 +31,33 @@ class DnsChangerController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isApplying => _isApplying;
   bool get isTestingLatency => _isTestingLatency;
+  bool get isTestingShield => _isTestingShield;
   String get statusMessage => _statusMessage;
+
+  bool get isBrowserDohBlocked => _isBrowserDohBlocked;
+  bool get isSafeSearchEnforced => _isSafeSearchEnforced;
+  bool get preventIpv6Leak => _preventIpv6Leak;
+  FamilyShieldTestResult? get testResult => _testResult;
+
+  /// Returns whether a Family-Safe DNS is currently active on the selected adapter
+  bool get isFamilyShieldActive {
+    final active = activeProvider;
+    return active != null && active.isFamilySafe;
+  }
+
+  DnsProviderItem? get activeProvider {
+    final id = activeProviderId;
+    if (id == null) return null;
+    return _providers.where((p) => p.id == id).firstOrNull;
+  }
 
   String? get activeProviderId {
     if (_selectedAdapter == null) return null;
     final currentDns = _selectedAdapter!.currentDnsServers;
 
-    if (_selectedAdapter!.isDhcp && (currentDns.isEmpty || currentDns.any((d) => d.startsWith('192.168.') || d.startsWith('10.') || d.startsWith('172.')))) {
+    if (_selectedAdapter!.isDhcp &&
+        (currentDns.isEmpty ||
+            currentDns.any((d) => d.startsWith('192.168.') || d.startsWith('10.') || d.startsWith('172.')))) {
       return 'dhcp';
     }
 
@@ -43,6 +70,10 @@ class DnsChangerController extends ChangeNotifier {
     return null;
   }
 
+  List<DnsProviderItem> get familySafeProviders {
+    return _providers.where((p) => p.isFamilySafe).toList();
+  }
+
   Future<void> loadData() async {
     _isLoading = true;
     notifyListeners();
@@ -51,12 +82,14 @@ class DnsChangerController extends ChangeNotifier {
     _adapters = await _service.getNetworkAdapters();
 
     if (_adapters.isNotEmpty) {
-      // Pick first connected adapter, prefer Wi-Fi or Ethernet
       _selectedAdapter = _adapters.firstWhere(
         (a) => a.isConnected,
         orElse: () => _adapters.first,
       );
     }
+
+    _isBrowserDohBlocked = await _service.isBrowserDohBypassPrevented();
+    _isSafeSearchEnforced = await _service.isSafeSearchEnforced();
 
     _isLoading = false;
     notifyListeners();
@@ -82,11 +115,19 @@ class DnsChangerController extends ChangeNotifier {
         adapterName: _selectedAdapter!.name,
         primaryDns: provider.primaryIpv4,
         secondaryDns: provider.secondaryIpv4,
+        primaryIpv6: provider.primaryIpv6,
+        secondaryIpv6: provider.secondaryIpv6,
+        isFamilySafe: provider.isFamilySafe,
+        preventIpv6Leak: _preventIpv6Leak,
       );
+
+      // If the family provider recommends SafeSearch, automatically ensure SafeSearch is active
+      if (provider.enforcesSafeSearch && !_isSafeSearchEnforced) {
+        await toggleSafeSearch(true);
+      }
     }
 
     if (success) {
-      // Refresh adapter status
       _adapters = await _service.getNetworkAdapters();
       _selectedAdapter = _adapters.firstWhere(
         (a) => a.name == _selectedAdapter!.name,
@@ -151,6 +192,40 @@ class DnsChangerController extends ChangeNotifier {
     _statusMessage = '';
     notifyListeners();
     return success;
+  }
+
+  Future<bool> toggleBrowserDoh(bool prevent) async {
+    final ok = await _service.setBrowserDohBypassPrevented(prevent);
+    if (ok) {
+      _isBrowserDohBlocked = prevent;
+      notifyListeners();
+    }
+    return ok;
+  }
+
+  Future<bool> toggleSafeSearch(bool enable) async {
+    final ok = await _service.setSafeSearchEnforced(enable);
+    if (ok) {
+      _isSafeSearchEnforced = enable;
+      notifyListeners();
+    }
+    return ok;
+  }
+
+  void togglePreventIpv6Leak(bool val) {
+    _preventIpv6Leak = val;
+    notifyListeners();
+  }
+
+  Future<FamilyShieldTestResult> runShieldTest() async {
+    _isTestingShield = true;
+    notifyListeners();
+
+    _testResult = await _service.testFamilyShieldProtection();
+
+    _isTestingShield = false;
+    notifyListeners();
+    return _testResult!;
   }
 
   Future<bool> flushDnsCache() async {

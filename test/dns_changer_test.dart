@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:antidotes/features/dns_changer/data/models/family_shield_test_result.dart';
 import 'package:antidotes/features/dns_changer/data/models/network_interface_item.dart';
 import 'package:antidotes/features/dns_changer/data/services/dns_changer_service.dart';
 import 'package:antidotes/features/dns_changer/presentation/controllers/dns_changer_controller.dart';
@@ -13,6 +14,9 @@ class FakeDnsChangerService extends DnsChangerService {
     isConnected: true,
   );
 
+  bool browserDohBlocked = false;
+  bool safeSearchEnforced = false;
+
   @override
   Future<List<NetworkInterfaceItem>> getNetworkAdapters() async {
     return [currentAdapter];
@@ -23,6 +27,10 @@ class FakeDnsChangerService extends DnsChangerService {
     required String adapterName,
     required String primaryDns,
     String? secondaryDns,
+    String? primaryIpv6,
+    String? secondaryIpv6,
+    bool isFamilySafe = false,
+    bool preventIpv6Leak = true,
   }) async {
     final servers = [primaryDns];
     if (secondaryDns != null && secondaryDns.isNotEmpty) {
@@ -49,6 +57,34 @@ class FakeDnsChangerService extends DnsChangerService {
 
   @override
   Future<int?> testLatency(String ipAddress) async => 15;
+
+  @override
+  Future<bool> setBrowserDohBypassPrevented(bool prevent) async {
+    browserDohBlocked = prevent;
+    return true;
+  }
+
+  @override
+  Future<bool> isBrowserDohBypassPrevented() async => browserDohBlocked;
+
+  @override
+  Future<bool> setSafeSearchEnforced(bool enable) async {
+    safeSearchEnforced = enable;
+    return true;
+  }
+
+  @override
+  Future<bool> isSafeSearchEnforced() async => safeSearchEnforced;
+
+  @override
+  Future<FamilyShieldTestResult> testFamilyShieldProtection() async {
+    return const FamilyShieldTestResult(
+      isAdultBlocked: true,
+      isSafeSearchEnforced: true,
+      isIpv6Protected: true,
+      details: 'All protection layers active and verified.',
+    );
+  }
 }
 
 void main() {
@@ -79,10 +115,13 @@ void main() {
       final cloudflareFamilyAdult = catalog.firstWhere((p) => p.id == 'cloudflare_family_adult');
       expect(cloudflareFamilyAdult.primaryIpv4, '1.1.1.3');
       expect(cloudflareFamilyAdult.secondaryIpv4, '1.0.0.3');
+      expect(cloudflareFamilyAdult.isFamilySafe, isTrue);
 
       final cleanbrowsingFamily = catalog.firstWhere((p) => p.id == 'cleanbrowsing_family');
       expect(cleanbrowsingFamily.primaryIpv4, '185.228.168.168');
       expect(cleanbrowsingFamily.secondaryIpv4, '185.228.169.168');
+      expect(cleanbrowsingFamily.isFamilySafe, isTrue);
+      expect(cleanbrowsingFamily.enforcesSafeSearch, isTrue);
 
       final google = catalog.firstWhere((p) => p.id == 'google');
       expect(google.primaryIpv4, '8.8.8.8');
@@ -90,6 +129,17 @@ void main() {
 
       final quad9 = catalog.firstWhere((p) => p.id == 'quad9');
       expect(quad9.primaryIpv4, '9.9.9.9');
+    });
+
+    test('DnsChangerService returns family safe providers for DNS Angel mode', () {
+      final service = DnsChangerService();
+      final familyList = service.getFamilySafeProviders();
+
+      expect(familyList.isNotEmpty, isTrue);
+      expect(familyList.any((p) => p.id == 'cleanbrowsing_family'), isTrue);
+      expect(familyList.any((p) => p.id == 'adguard_family'), isTrue);
+      expect(familyList.any((p) => p.id == 'cloudflare_family_adult'), isTrue);
+      expect(familyList.any((p) => p.id == 'opendns_familyshield'), isTrue);
     });
 
     test('NetworkInterfaceItem formats current DNS correctly', () {
@@ -119,6 +169,7 @@ void main() {
       expect(controller.selectedAdapter, isNotNull);
       expect(controller.selectedAdapter!.name, 'Wi-Fi');
       expect(controller.activeProviderId, 'dhcp');
+      expect(controller.isFamilyShieldActive, isFalse);
     });
 
     test('applies Cloudflare DNS and updates active provider state', () async {
@@ -132,6 +183,47 @@ void main() {
       expect(ok, isTrue);
       expect(controller.selectedAdapter!.currentDnsServers, ['1.1.1.1', '1.0.0.1']);
       expect(controller.activeProviderId, 'cloudflare');
+      expect(controller.isFamilyShieldActive, isFalse);
+    });
+
+    test('applies CleanBrowsing Family and activates Family Shield (DNS Angel)', () async {
+      final service = FakeDnsChangerService();
+      final controller = DnsChangerController(service: service);
+      await controller.loadData();
+
+      final cleanbrowsing = controller.providers.firstWhere((p) => p.id == 'cleanbrowsing_family');
+      final ok = await controller.applyProvider(cleanbrowsing);
+
+      expect(ok, isTrue);
+      expect(controller.activeProviderId, 'cleanbrowsing_family');
+      expect(controller.isFamilyShieldActive, isTrue);
+      expect(controller.isSafeSearchEnforced, isTrue);
+    });
+
+    test('toggles Browser DoH bypass and SafeSearch', () async {
+      final service = FakeDnsChangerService();
+      final controller = DnsChangerController(service: service);
+      await controller.loadData();
+
+      expect(controller.isBrowserDohBlocked, isFalse);
+      final dohOk = await controller.toggleBrowserDoh(true);
+      expect(dohOk, isTrue);
+      expect(controller.isBrowserDohBlocked, isTrue);
+
+      final safeOk = await controller.toggleSafeSearch(true);
+      expect(safeOk, isTrue);
+      expect(controller.isSafeSearchEnforced, isTrue);
+    });
+
+    test('runs live shield verification test', () async {
+      final service = FakeDnsChangerService();
+      final controller = DnsChangerController(service: service);
+      await controller.loadData();
+
+      final res = await controller.runShieldTest();
+      expect(res.isFullyProtected, isTrue);
+      expect(res.isAdultBlocked, isTrue);
+      expect(controller.testResult, isNotNull);
     });
 
     test('applies custom DNS servers', () async {
@@ -163,6 +255,7 @@ void main() {
       expect(ok, isTrue);
       expect(controller.selectedAdapter!.isDhcp, isTrue);
       expect(controller.activeProviderId, 'dhcp');
+      expect(controller.isFamilyShieldActive, isFalse);
     });
 
     test('benchmarks all latencies and populates latencyMs', () async {
