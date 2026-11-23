@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import '../../../../core/utils/admin_helper.dart';
 import '../models/ram_snapshot.dart';
 import '../models/ram_boost_result.dart';
 import '../models/ram_optimize_options.dart';
@@ -27,8 +28,7 @@ class RamOptimizerService {
 
   /// Runs the selected RAM-cleaning operations.
   ///
-  /// Non-admin operations run first without UAC.
-  /// If any admin operation is selected, an elevated UAC process is also launched.
+  /// When running elevated, all operations execute directly in-process without any UAC prompts.
   Future<RamBoostResult> boost(RamOptimizeOptions options) async {
     if (!Platform.isWindows) {
       return RamBoostResult.failed(
@@ -49,65 +49,75 @@ class RamOptimizerService {
     final before = await _readSnapshot();
     final Map<RamOperation, String> opResults = {};
 
-    // ── Step 1: Run non-admin operations directly ─────────────────────────
-    final nonAdminOps = options.selected.where((o) => !o.requiresAdmin).toSet();
-    if (nonAdminOps.isNotEmpty) {
+    final isAdmin = await AdminHelper.isRunningAsAdmin();
+
+    if (isAdmin) {
+      // ── Process is running elevated ────────────────────────────────────────
+      // All operations run directly in a single pass without any secondary UAC prompt.
       final directResults = await _runScript(
-        _buildScript(nonAdminOps, resultFile: null),
+        _buildScript(options.selected, resultFile: null),
         elevated: false,
       );
       opResults.addAll(directResults);
-    }
-
-    // ── Step 2: Run all selected operations elevated (if admin ops needed) ─
-    bool elevatedRan = false;
-    if (options.requiresAdmin) {
-      final ts = DateTime.now().millisecondsSinceEpoch;
-      final tempDir = Directory.systemTemp.path;
-      final scriptPath = '$tempDir\\antidotes_ram_$ts.ps1';
-      final resultPath = '$tempDir\\antidotes_ram_${ts}_out.txt';
-
-      final script = _buildScript(options.selected, resultFile: resultPath);
-      try {
-        await File(scriptPath).writeAsString(script);
-        await Process.run(
-          'powershell.exe',
-          [
-            '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
-            'Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden '
-                '-ArgumentList \'-NoProfile -ExecutionPolicy Bypass -File "$scriptPath"\'',
-          ],
-          runInShell: false,
+    } else {
+      // ── Fallback when running without elevation (e.g. dev/debug) ───────────
+      final nonAdminOps = options.selected.where((o) => !o.requiresAdmin).toSet();
+      if (nonAdminOps.isNotEmpty) {
+        final directResults = await _runScript(
+          _buildScript(nonAdminOps, resultFile: null),
+          elevated: false,
         );
-        try { await File(scriptPath).delete(); } catch (_) {}
-
-        final f = File(resultPath);
-        if (await f.exists()) {
-          final content = (await f.readAsString()).trim();
-          try { await f.delete(); } catch (_) {}
-          final parsed = _parseResults(content);
-          opResults.addAll(parsed);
-          elevatedRan = true;
-        }
-      } catch (e) {
-        debugPrint('RamOptimizerService.boost elevated error: $e');
-        try { await File(scriptPath).delete(); } catch (_) {}
-        try { await File(resultPath).delete(); } catch (_) {}
+        opResults.addAll(directResults);
       }
 
-      if (!elevatedRan) {
-        // UAC was cancelled or failed
-        final after = await _readSnapshot();
-        return RamBoostResult(
-          totalRamMb: after.totalMb,
-          usedBeforeMb: before.usedMb,
-          usedAfterMb: after.usedMb,
-          success: opResults.isNotEmpty,
-          operationResults: opResults,
-          errorMessage: opResults.isEmpty
-              ? 'Administrator permission was not granted (UAC cancelled).'
-              : null,
-        );
+      bool elevatedRan = false;
+      if (options.requiresAdmin) {
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final tempDir = Directory.systemTemp.path;
+        final scriptPath = '$tempDir\\antidotes_ram_$ts.ps1';
+        final resultPath = '$tempDir\\antidotes_ram_${ts}_out.txt';
+
+        final script = _buildScript(options.selected, resultFile: resultPath);
+        try {
+          await File(scriptPath).writeAsString(script);
+          await Process.run(
+            'powershell.exe',
+            [
+              '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
+              'Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden '
+                  '-ArgumentList \'-NoProfile -ExecutionPolicy Bypass -File "$scriptPath"\'',
+            ],
+            runInShell: false,
+          );
+          try { await File(scriptPath).delete(); } catch (_) {}
+
+          final f = File(resultPath);
+          if (await f.exists()) {
+            final content = (await f.readAsString()).trim();
+            try { await f.delete(); } catch (_) {}
+            final parsed = _parseResults(content);
+            opResults.addAll(parsed);
+            elevatedRan = true;
+          }
+        } catch (e) {
+          debugPrint('RamOptimizerService.boost elevated error: $e');
+          try { await File(scriptPath).delete(); } catch (_) {}
+          try { await File(resultPath).delete(); } catch (_) {}
+        }
+
+        if (!elevatedRan) {
+          final after = await _readSnapshot();
+          return RamBoostResult(
+            totalRamMb: after.totalMb,
+            usedBeforeMb: before.usedMb,
+            usedAfterMb: after.usedMb,
+            success: opResults.isNotEmpty,
+            operationResults: opResults,
+            errorMessage: opResults.isEmpty
+                ? 'Administrator permission was not granted (UAC cancelled).'
+                : null,
+          );
+        }
       }
     }
 

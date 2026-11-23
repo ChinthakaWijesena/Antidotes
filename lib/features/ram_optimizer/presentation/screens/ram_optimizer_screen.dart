@@ -227,7 +227,6 @@ class _RamOptimizerScreenState extends State<RamOptimizerScreen> {
   Widget _buildBoostCard() {
     final isBoosting = _ctrl.boostState == RamBoostState.boosting;
     final noneSelected = _ctrl.options.selected.isEmpty;
-    final requiresAdmin = _ctrl.options.requiresAdmin;
 
     return Container(
       width: double.infinity,
@@ -260,9 +259,7 @@ class _RamOptimizerScreenState extends State<RamOptimizerScreen> {
                     ? 'Optimizing…'
                     : noneSelected
                         ? 'Select at least one operation'
-                        : requiresAdmin
-                            ? '⚡  Optimize  (UAC required)'
-                            : '⚡  Optimize RAM',
+                        : '⚡  Optimize RAM',
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -283,12 +280,12 @@ class _RamOptimizerScreenState extends State<RamOptimizerScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            requiresAdmin
-                ? 'Admin operations selected — Windows UAC prompt will appear'
-                : 'No UAC prompt — selected operations run without elevation',
+            noneSelected
+                ? 'Select operations above to optimize memory'
+                : 'Trims process working sets, clears file cache & purges standby memory',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: requiresAdmin ? AppColors.warning : AppColors.textMuted,
+              color: AppColors.textMuted,
               fontSize: 11,
             ),
           ),

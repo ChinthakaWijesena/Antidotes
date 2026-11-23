@@ -43,35 +43,6 @@ class OptimizeOptionsPanel extends StatelessWidget {
                     letterSpacing: 1.4,
                   ),
                 ),
-                const Spacer(),
-                // Admin needed indicator
-                if (options.requiresAdmin)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: AppColors.warning.withValues(alpha: 0.4)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.shield_rounded,
-                            color: AppColors.warning, size: 11),
-                        const SizedBox(width: 4),
-                        Text(
-                          'UAC REQUIRED',
-                          style: TextStyle(
-                            color: AppColors.warning,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
               ],
             ),
           ),
