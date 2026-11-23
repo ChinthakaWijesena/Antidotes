@@ -316,10 +316,12 @@ class _BrowserCleanerScreenState extends State<BrowserCleanerScreen> {
   Widget _buildHeader(bool isBusy) {
     final canClean = _controller.selectedJunkBytes > 0 && !isBusy;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 700;
+
+        final titleSection = Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(12),
@@ -342,31 +344,37 @@ class _BrowserCleanerScreenState extends State<BrowserCleanerScreen> {
                   color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Browser Cleaner',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Browser Cleaner',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Clean caches, history, cookies & session leftovers across all browsers',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
+                  const SizedBox(height: 2),
+                  Text(
+                    'Clean caches, history, cookies & session leftovers across all browsers',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
-        ),
-        Row(
+        );
+
+        final actionButtons = Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             // Scan Button
             OutlinedButton.icon(
@@ -374,7 +382,6 @@ class _BrowserCleanerScreenState extends State<BrowserCleanerScreen> {
               icon: const Icon(Icons.search_rounded, size: 18),
               label: const Text('Scan Browsers'),
             ),
-            const SizedBox(width: 12),
 
             // Clean Button
             ElevatedButton.icon(
@@ -387,55 +394,100 @@ class _BrowserCleanerScreenState extends State<BrowserCleanerScreen> {
               ),
             ),
           ],
-        ),
-      ],
+        );
+
+        if (isNarrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              titleSection,
+              const SizedBox(height: 14),
+              actionButtons,
+            ],
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: titleSection),
+            const SizedBox(width: 16),
+            actionButtons,
+          ],
+        );
+      },
     );
   }
 
   Widget _buildStatsRow() {
-    return Row(
-      children: [
-        // Total Detected
-        Expanded(
-          child: _statCard(
-            title: 'Total Detected',
-            value: FileSizeFormatter.format(_controller.totalJunkBytes),
-            subtitle: '${_controller.totalFilesDetected} files found',
-            icon: Icons.delete_outline_rounded,
-            iconColor: AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(width: 16),
+    final card1 = _statCard(
+      title: 'Total Detected',
+      value: FileSizeFormatter.format(_controller.totalJunkBytes),
+      subtitle: '${_controller.totalFilesDetected} files found',
+      icon: Icons.delete_outline_rounded,
+      iconColor: AppColors.textSecondary,
+    );
 
-        // Selected for Cleaning
-        Expanded(
-          child: _statCard(
-            title: 'Selected for Cleaning',
-            value: FileSizeFormatter.format(_controller.selectedJunkBytes),
-            subtitle: '${_controller.selectedFilesCount} items ready to clean',
-            icon: Icons.check_circle_outline_rounded,
-            iconColor: AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: 16),
+    final card2 = _statCard(
+      title: 'Selected for Cleaning',
+      value: FileSizeFormatter.format(_controller.selectedJunkBytes),
+      subtitle: '${_controller.selectedFilesCount} items ready to clean',
+      icon: Icons.check_circle_outline_rounded,
+      iconColor: AppColors.primary,
+    );
 
-        // Open Browsers Status
-        Expanded(
-          child: _statCard(
-            title: 'Active Browsers',
-            value: _controller.runningBrowsersCount == 0
-                ? 'All Closed'
-                : '${_controller.runningBrowsersCount} Running',
-            subtitle: _controller.runningBrowsersCount == 0
-                ? 'Safe to clean all caches'
-                : 'Close browsers to unlock all files',
-            icon: Icons.shield_outlined,
-            iconColor: _controller.runningBrowsersCount == 0
-                ? AppColors.success
-                : AppColors.warning,
-          ),
-        ),
-      ],
+    final card3 = _statCard(
+      title: 'Active Browsers',
+      value: _controller.runningBrowsersCount == 0
+          ? 'All Closed'
+          : '${_controller.runningBrowsersCount} Running',
+      subtitle: _controller.runningBrowsersCount == 0
+          ? 'Safe to clean all caches'
+          : 'Close browsers to unlock all files',
+      icon: Icons.shield_outlined,
+      iconColor: _controller.runningBrowsersCount == 0
+          ? AppColors.success
+          : AppColors.warning,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 560) {
+          return Column(
+            children: [
+              card1,
+              const SizedBox(height: 10),
+              card2,
+              const SizedBox(height: 10),
+              card3,
+            ],
+          );
+        } else if (constraints.maxWidth < 820) {
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: card1),
+                  const SizedBox(width: 12),
+                  Expanded(child: card2),
+                ],
+              ),
+              const SizedBox(height: 12),
+              card3,
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: card1),
+            const SizedBox(width: 14),
+            Expanded(child: card2),
+            const SizedBox(width: 14),
+            Expanded(child: card3),
+          ],
+        );
+      },
     );
   }
 
@@ -447,23 +499,23 @@ class _BrowserCleanerScreenState extends State<BrowserCleanerScreen> {
     required Color iconColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor, size: 28),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,18 +523,23 @@ class _BrowserCleanerScreenState extends State<BrowserCleanerScreen> {
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
                   style: TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 13,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     letterSpacing: -0.5,
                   ),
@@ -490,9 +547,11 @@ class _BrowserCleanerScreenState extends State<BrowserCleanerScreen> {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: AppColors.textMuted,
-                    fontSize: 12,
+                    fontSize: 11.5,
                   ),
                 ),
               ],

@@ -131,35 +131,60 @@ class _SoftwareUninstallerScreenState extends State<SoftwareUninstallerScreen> {
   }
 
   Widget _buildStatsCards() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildMetricCard(
-            title: 'Installed Applications',
-            value: '${_controller.totalCount} Apps',
-            icon: Icons.apps_rounded,
-            color: const Color(0xFF0288D1),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: _buildMetricCard(
-            title: 'Estimated Disk Footprint',
-            value: _controller.totalSizeFormatted,
-            icon: Icons.pie_chart_rounded,
-            color: const Color(0xFFF57C00),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: _buildMetricCard(
-            title: 'Deep Clean Engine',
-            value: 'Registry & File Trace Purge',
-            icon: Icons.auto_delete_rounded,
-            color: Colors.green,
-          ),
-        ),
-      ],
+    final card1 = _buildMetricCard(
+      title: 'Installed Applications',
+      value: '${_controller.totalCount} Apps',
+      icon: Icons.apps_rounded,
+      color: const Color(0xFF0288D1),
+    );
+    final card2 = _buildMetricCard(
+      title: 'Estimated Disk Footprint',
+      value: _controller.totalSizeFormatted,
+      icon: Icons.pie_chart_rounded,
+      color: const Color(0xFFF57C00),
+    );
+    final card3 = _buildMetricCard(
+      title: 'Deep Clean Engine',
+      value: 'Registry & File Trace Purge',
+      icon: Icons.auto_delete_rounded,
+      color: Colors.green,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 480) {
+          return Column(
+            children: [
+              card1,
+              const SizedBox(height: 10),
+              card2,
+              const SizedBox(height: 10),
+              card3,
+            ],
+          );
+        } else if (constraints.maxWidth < 720) {
+          return Column(
+            children: [
+              Row(children: [
+                Expanded(child: card1),
+                const SizedBox(width: 12),
+                Expanded(child: card2),
+              ]),
+              const SizedBox(height: 10),
+              card3,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: card1),
+            const SizedBox(width: 14),
+            Expanded(child: card2),
+            const SizedBox(width: 14),
+            Expanded(child: card3),
+          ],
+        );
+      },
     );
   }
 
@@ -274,190 +299,205 @@ class _SoftwareUninstallerScreenState extends State<SoftwareUninstallerScreen> {
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.surfaceBorder),
-      ),
-      child: Column(
-        children: [
-          // Table Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: _buildColumnHeader('Name', 'name'),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: _buildColumnHeader('Publisher', 'publisher'),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: _buildColumnHeader('Install Date', 'date'),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: _buildColumnHeader('Size', 'size'),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Version',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 100,
-                  child: Text(
-                    'Action',
-                    textAlign: TextAlign.end,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return LayoutBuilder(
+      builder: (context, tableConstraints) {
+        const double minTableWidth = 760.0;
+        final tableWidth = tableConstraints.maxWidth < minTableWidth
+            ? minTableWidth
+            : tableConstraints.maxWidth;
 
-          // Table Rows
-          Expanded(
-            child: ListView.separated(
-              itemCount: apps.length,
-              separatorBuilder: (context, index) =>
-                  Divider(height: 1, color: AppColors.surfaceBorder.withValues(alpha: 0.5)),
-              itemBuilder: (context, index) {
-                final app = apps[index];
-                return InkWell(
-                  onTap: () => _openUninstallWizard(app),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.surfaceBorder),
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: tableWidth,
+              child: Column(
+                children: [
+                  // Table Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
+                    ),
                     child: Row(
                       children: [
-                        // Icon & Name
                         Expanded(
                           flex: 5,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceLight,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Icon(
-                                  app.defaultIcon,
-                                  size: 18,
-                                  color: const Color(0xFFF57C00),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  app.name,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
+                          child: _buildColumnHeader('Name', 'name'),
                         ),
-                        // Publisher
                         Expanded(
                           flex: 3,
-                          child: Text(
-                            app.displayPublisher,
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          child: _buildColumnHeader('Publisher', 'publisher'),
                         ),
-                        // Install Date
+                        Expanded(
+                          flex: 2,
+                          child: _buildColumnHeader('Install Date', 'date'),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: _buildColumnHeader('Size', 'size'),
+                        ),
                         Expanded(
                           flex: 2,
                           child: Text(
-                            app.displayDate,
-                            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-                          ),
-                        ),
-                        // Size
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            app.formattedSize,
+                            'Version',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textMuted,
                             ),
                           ),
                         ),
-                        // Version
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            app.displayVersion,
-                            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        // Uninstall Button
                         SizedBox(
                           width: 100,
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: ElevatedButton.icon(
-                              onPressed: () => _openUninstallWizard(app),
-                              icon: const Icon(Icons.delete_outline_rounded, size: 14),
-                              label: const Text('Uninstall'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFD32F2F).withValues(alpha: 0.12),
-                                foregroundColor: const Color(0xFFE53935),
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                elevation: 0,
-                                textStyle: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  side: BorderSide(
-                                    color: const Color(0xFFE53935).withValues(alpha: 0.3),
-                                  ),
-                                ),
-                              ),
+                          child: Text(
+                            'Action',
+                            textAlign: TextAlign.end,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textMuted,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                );
-              },
+
+                  // Table Rows
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: apps.length,
+                      separatorBuilder: (context, index) =>
+                          Divider(height: 1, color: AppColors.surfaceBorder.withValues(alpha: 0.5)),
+                      itemBuilder: (context, index) {
+                        final app = apps[index];
+                        return InkWell(
+                          onTap: () => _openUninstallWizard(app),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            child: Row(
+                              children: [
+                                // Icon & Name
+                                Expanded(
+                                  flex: 5,
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surfaceLight,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Icon(
+                                          app.defaultIcon,
+                                          size: 18,
+                                          color: const Color(0xFFF57C00),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          app.name,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Publisher
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    app.displayPublisher,
+                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                // Install Date
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    app.displayDate,
+                                    style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                  ),
+                                ),
+                                // Size
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    app.formattedSize,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                // Version
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    app.displayVersion,
+                                    style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                // Uninstall Button
+                                SizedBox(
+                                  width: 100,
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _openUninstallWizard(app),
+                                      icon: const Icon(Icons.delete_outline_rounded, size: 14),
+                                      label: const Text('Uninstall'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFD32F2F).withValues(alpha: 0.12),
+                                        foregroundColor: const Color(0xFFE53935),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        elevation: 0,
+                                        textStyle: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(6),
+                                          side: BorderSide(
+                                            color: const Color(0xFFE53935).withValues(alpha: 0.3),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

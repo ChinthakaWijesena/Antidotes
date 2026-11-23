@@ -118,28 +118,31 @@ class _WindowsSettingsScreenState extends State<WindowsSettingsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Windows Settings & Tools',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-                letterSpacing: -0.5,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Windows Settings & Tools',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'System theme toggle, visual performance options, power schemes, virtual memory & environment variables',
-              style: TextStyle(
-                fontSize: 12.5,
-                color: AppColors.textMuted,
+              const SizedBox(height: 4),
+              Text(
+                'System theme toggle, visual performance options, power schemes, virtual memory & environment variables',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textMuted,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        const SizedBox(width: 12),
         IconButton(
           onPressed: _controller.loadAllSettings,
           icon: const Icon(Icons.refresh_rounded),

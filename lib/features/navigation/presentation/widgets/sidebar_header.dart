@@ -3,7 +3,12 @@ import '../../../../core/constants/app_colors.dart';
 
 /// Top header of the Antidotes sidebar displaying the app icon, title and category badge.
 class SidebarHeader extends StatelessWidget {
-  const SidebarHeader({super.key});
+  final VoidCallback? onToggleCollapse;
+
+  const SidebarHeader({
+    super.key,
+    this.onToggleCollapse,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -11,14 +16,14 @@ class SidebarHeader extends StatelessWidget {
       children: [
         const SizedBox(height: 24),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: AppColors.primary.withValues(alpha: 0.4),
                     width: 1.5,
@@ -26,13 +31,13 @@ class SidebarHeader extends StatelessWidget {
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primary.withValues(alpha: 0.25),
-                      blurRadius: 12,
+                      blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   child: Image.asset(
                     'assets/icons/app_logo.png',
                     fit: BoxFit.cover,
@@ -43,7 +48,7 @@ class SidebarHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +57,7 @@ class SidebarHeader extends StatelessWidget {
                       'Antidotes',
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
                       ),
@@ -68,7 +73,7 @@ class SidebarHeader extends StatelessWidget {
                         'PC OPTIMIZER',
                         style: TextStyle(
                           color: AppColors.primary,
-                          fontSize: 9,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
                         ),
@@ -77,12 +82,20 @@ class SidebarHeader extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onToggleCollapse != null)
+                IconButton(
+                  icon: const Icon(Icons.menu_open_rounded, size: 18),
+                  tooltip: 'Collapse sidebar',
+                  color: AppColors.textMuted,
+                  onPressed: onToggleCollapse,
+                  splashRadius: 18,
+                ),
             ],
           ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 18),
         const Divider(height: 1),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
       ],
     );
   }

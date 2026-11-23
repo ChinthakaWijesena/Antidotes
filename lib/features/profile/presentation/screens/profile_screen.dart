@@ -23,8 +23,8 @@ class ProfileScreen extends StatelessWidget {
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(24),
-        child: SizedBox(
-          width: 560,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560, minWidth: 320),
           child: ProfileScreen(
             authController: authController,
             profileController: profileController,

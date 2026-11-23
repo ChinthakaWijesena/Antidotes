@@ -363,10 +363,11 @@ class _SoftwareInstallerScreenState extends State<SoftwareInstallerScreen> {
   Widget _buildHeader(bool isBusy) {
     final canBatchInstall = _controller.selectedCount > 0 && !isBusy;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 740;
+
+        final titleWidget = Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
@@ -389,74 +390,105 @@ class _SoftwareInstallerScreenState extends State<SoftwareInstallerScreen> {
                   color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Software Installer',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '1-Click install popular Windows applications cleanly & silently via winget',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+
+        final searchWidget = SizedBox(
+          width: isNarrow ? null : 260,
+          height: 38,
+          child: TextField(
+            controller: _searchController,
+            onChanged: (val) => _controller.setSearchQuery(val),
+            decoration: InputDecoration(
+              hintText: 'Search software (Chrome, VS Code...)',
+              hintStyle:
+                  TextStyle(color: AppColors.textMuted, fontSize: 12),
+              prefixIcon: Icon(Icons.search_rounded,
+                  size: 18, color: AppColors.textSecondary),
+              filled: true,
+              fillColor: AppColors.surface,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.surfaceBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.surfaceBorder),
+              ),
+            ),
+          ),
+        );
+
+        final batchButton = ElevatedButton.icon(
+          onPressed: canBatchInstall ? _handleBatchInstall : null,
+          icon: const Icon(Icons.download_for_offline_rounded, size: 18),
+          label: Text(
+            _controller.selectedCount > 0
+                ? 'Install Selected (${_controller.selectedCount})'
+                : 'Install Selected',
+          ),
+        );
+
+        if (isNarrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              titleWidget,
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(child: searchWidget),
+                  const SizedBox(width: 12),
+                  batchButton,
+                ],
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: titleWidget),
+            const SizedBox(width: 16),
+            Row(
               children: [
-                Text(
-                  'Software Installer',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '1-Click install popular Windows applications cleanly & silently via winget',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+                searchWidget,
+                const SizedBox(width: 12),
+                batchButton,
               ],
             ),
           ],
-        ),
-
-        // Search & Batch Install Button
-        Row(
-          children: [
-            SizedBox(
-              width: 260,
-              height: 38,
-              child: TextField(
-                controller: _searchController,
-                onChanged: (val) => _controller.setSearchQuery(val),
-                decoration: InputDecoration(
-                  hintText: 'Search software (Chrome, VS Code...)',
-                  hintStyle:
-                      TextStyle(color: AppColors.textMuted, fontSize: 12),
-                  prefixIcon: Icon(Icons.search_rounded,
-                      size: 18, color: AppColors.textSecondary),
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.surfaceBorder),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.surfaceBorder),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            ElevatedButton.icon(
-              onPressed: canBatchInstall ? _handleBatchInstall : null,
-              icon: const Icon(Icons.download_for_offline_rounded, size: 18),
-              label: Text(
-                _controller.selectedCount > 0
-                    ? 'Install Selected (${_controller.selectedCount})'
-                    : 'Install Selected',
-              ),
-            ),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 

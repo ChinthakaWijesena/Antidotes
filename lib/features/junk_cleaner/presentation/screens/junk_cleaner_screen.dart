@@ -260,10 +260,12 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
   Widget _buildHeader(bool isBusy) {
     final selectedBytes = _controller.selectedJunkBytes;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 700;
+
+        final titleSection = Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(12),
@@ -286,31 +288,37 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
                   color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Antidotes Junk Cleaner',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Antidotes Junk Cleaner',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Strict whitelist scanning, pattern-based risk assessment & safe deletion',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
+                  const SizedBox(height: 2),
+                  Text(
+                    'Strict whitelist scanning, pattern-based risk assessment & safe deletion',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
-        ),
-        Row(
+        );
+
+        final actionButtons = Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             // Safety Settings Button
             IconButton.filledTonal(
@@ -318,7 +326,6 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
               onPressed: isBusy ? null : _openSafetySettings,
               icon: const Icon(Icons.shield_outlined, size: 20),
             ),
-            const SizedBox(width: 12),
 
             // Scan Button
             OutlinedButton.icon(
@@ -326,7 +333,6 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
               icon: const Icon(Icons.search_rounded, size: 18),
               label: Text(_controller.hasScanned ? 'Re-scan' : 'Scan Now'),
             ),
-            const SizedBox(width: 12),
 
             // Clean Button
             ElevatedButton.icon(
@@ -339,42 +345,96 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
               ),
             ),
           ],
-        ),
-      ],
+        );
+
+        if (isNarrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              titleSection,
+              const SizedBox(height: 14),
+              actionButtons,
+            ],
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: titleSection),
+            const SizedBox(width: 16),
+            actionButtons,
+          ],
+        );
+      },
     );
   }
 
   Widget _buildStatsRow() {
-    return Row(
-      children: [
-        StatsCard(
-          title: 'Total Junk Detected',
-          value: FileSizeFormatter.format(_controller.totalJunkBytes),
-          subtitle: '${_controller.totalJunkFiles} files detected',
-          icon: Icons.delete_outline_rounded,
-          iconColor: AppColors.primary,
-        ),
-        const SizedBox(width: 16),
-        StatsCard(
-          title: 'Selected for Cleaning',
-          value: FileSizeFormatter.format(_controller.selectedJunkBytes),
-          subtitle: '${_controller.selectedJunkFiles} items ready to clean',
-          icon: Icons.check_circle_outline_rounded,
-          iconColor: AppColors.secondary,
-        ),
-        const SizedBox(width: 16),
-        StatsCard(
-          title: '24h File Protection',
-          value: _controller.safetyOptions.ignoreRecent24Hours ? 'Active' : 'Disabled',
-          subtitle: _controller.safetyOptions.sendToRecycleBin
-              ? 'Recycle Bin Mode'
-              : 'Permanent Mode',
-          icon: Icons.verified_user_outlined,
-          iconColor: _controller.safetyOptions.ignoreRecent24Hours
-              ? AppColors.success
-              : AppColors.warning,
-        ),
-      ],
+    final card1 = StatsCard(
+      title: 'Total Junk Detected',
+      value: FileSizeFormatter.format(_controller.totalJunkBytes),
+      subtitle: '${_controller.totalJunkFiles} files detected',
+      icon: Icons.delete_outline_rounded,
+      iconColor: AppColors.primary,
+    );
+    final card2 = StatsCard(
+      title: 'Selected for Cleaning',
+      value: FileSizeFormatter.format(_controller.selectedJunkBytes),
+      subtitle: '${_controller.selectedJunkFiles} items ready to clean',
+      icon: Icons.check_circle_outline_rounded,
+      iconColor: AppColors.secondary,
+    );
+    final card3 = StatsCard(
+      title: '24h File Protection',
+      value: _controller.safetyOptions.ignoreRecent24Hours ? 'Active' : 'Disabled',
+      subtitle: _controller.safetyOptions.sendToRecycleBin
+          ? 'Recycle Bin Mode'
+          : 'Permanent Mode',
+      icon: Icons.verified_user_outlined,
+      iconColor: _controller.safetyOptions.ignoreRecent24Hours
+          ? AppColors.success
+          : AppColors.warning,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 560) {
+          return Column(
+            children: [
+              card1,
+              const SizedBox(height: 10),
+              card2,
+              const SizedBox(height: 10),
+              card3,
+            ],
+          );
+        } else if (constraints.maxWidth < 820) {
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: card1),
+                  const SizedBox(width: 12),
+                  Expanded(child: card2),
+                ],
+              ),
+              const SizedBox(height: 12),
+              card3,
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: card1),
+            const SizedBox(width: 14),
+            Expanded(child: card2),
+            const SizedBox(width: 14),
+            Expanded(child: card3),
+          ],
+        );
+      },
     );
   }
 

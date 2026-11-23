@@ -47,7 +47,10 @@ class _HardwareMonitorScreenState extends State<HardwareMonitorScreen> {
             : SingleChildScrollView(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                child: Column(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 620;
+                    return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Header Bar
@@ -55,64 +58,85 @@ class _HardwareMonitorScreenState extends State<HardwareMonitorScreen> {
                     const SizedBox(height: 24),
 
                     // Grid of Live Cards: CPU & RAM
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: CpuMonitorCard(
-                            cpu: snapshot.cpu,
-                            history: _controller.cpuHistory,
+                    if (isNarrow) ...[
+                      CpuMonitorCard(
+                        cpu: snapshot.cpu,
+                        history: _controller.cpuHistory,
+                      ),
+                      const SizedBox(height: 16),
+                      RamMonitorCard(
+                        ram: snapshot.ram,
+                        history: _controller.ramHistory,
+                      ),
+                      const SizedBox(height: 16),
+                      GpuMonitorCard(gpu: snapshot.gpu),
+                      const SizedBox(height: 16),
+                      FanSpeedMonitorCard(
+                        fan: snapshot.fan,
+                        history: _controller.fanHistory,
+                      ),
+                      const SizedBox(height: 16),
+                      BatteryMonitorCard(battery: snapshot.battery),
+                      const SizedBox(height: 16),
+                      NetworkMonitorCard(network: snapshot.network),
+                    ] else ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: CpuMonitorCard(
+                              cpu: snapshot.cpu,
+                              history: _controller.cpuHistory,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: RamMonitorCard(
-                            ram: snapshot.ram,
-                            history: _controller.ramHistory,
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: RamMonitorCard(
+                              ram: snapshot.ram,
+                              history: _controller.ramHistory,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Grid of Live Cards: GPU & Fan Speed (Cooling)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: GpuMonitorCard(gpu: snapshot.gpu),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: FanSpeedMonitorCard(
-                            fan: snapshot.fan,
-                            history: _controller.fanHistory,
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: GpuMonitorCard(gpu: snapshot.gpu),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Grid of Live Cards: Battery & Network
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: BatteryMonitorCard(battery: snapshot.battery),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: NetworkMonitorCard(network: snapshot.network),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: FanSpeedMonitorCard(
+                              fan: snapshot.fan,
+                              history: _controller.fanHistory,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: BatteryMonitorCard(battery: snapshot.battery),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: NetworkMonitorCard(network: snapshot.network),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 20),
 
                     // Live Card: Storage Drives
                     StorageMonitorCard(storage: snapshot.storage),
                   ],
-                ),
-              ),
+                );
+              },
+            ),
+          ),
       ),
     );
   }

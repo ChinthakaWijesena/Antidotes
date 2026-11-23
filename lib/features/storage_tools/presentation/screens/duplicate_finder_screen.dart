@@ -96,78 +96,148 @@ class _DuplicateFinderScreenState extends State<DuplicateFinderScreen> {
 
   Widget _buildControls() {
     final scanning = _ctrl.state == DupScanState.scanning;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.surfaceBorder),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.surfaceBorder),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 620;
+
+        final folderBox = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.surfaceBorder),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.folder_rounded, color: AppColors.secondary, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _ctrl.rootPath.isEmpty ? 'No folder selected' : _ctrl.rootPath,
+                  style: TextStyle(
+                      color: _ctrl.rootPath.isEmpty
+                          ? AppColors.textMuted
+                          : AppColors.textSecondary,
+                      fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              child: Row(
-                children: [
-                  Icon(Icons.folder_rounded, color: AppColors.secondary, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _ctrl.rootPath.isEmpty ? 'No folder selected' : _ctrl.rootPath,
-                      style: TextStyle(
-                          color: _ctrl.rootPath.isEmpty
-                              ? AppColors.textMuted
-                              : AppColors.textSecondary,
-                          fontSize: 13),
-                      overflow: TextOverflow.ellipsis,
+            ],
+          ),
+        );
+
+        final actionButtons = Row(
+          mainAxisSize: isNarrow ? MainAxisSize.max : MainAxisSize.min,
+          children: [
+            isNarrow
+                ? Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: scanning ? null : _ctrl.pickFolder,
+                      icon: const Icon(Icons.folder_open_rounded, size: 16),
+                      label: const Text('Browse'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textSecondary,
+                        side: BorderSide(color: AppColors.surfaceBorder),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  )
+                : OutlinedButton.icon(
+                    onPressed: scanning ? null : _ctrl.pickFolder,
+                    icon: const Icon(Icons.folder_open_rounded, size: 16),
+                    label: const Text('Browse'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textSecondary,
+                      side: BorderSide(color: AppColors.surfaceBorder),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
                   ),
-                ],
-              ),
-            ),
+            const SizedBox(width: 10),
+            isNarrow
+                ? Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: ElevatedButton.icon(
+                        onPressed: scanning
+                            ? _ctrl.cancelScan
+                            : (_ctrl.rootPath.isEmpty ? null : _ctrl.startScan),
+                        icon: Icon(
+                          scanning ? Icons.stop_rounded : Icons.search_rounded,
+                          size: 16,
+                          color: AppColors.textPrimary,
+                        ),
+                        label: Text(
+                          scanning ? 'Stop' : 'Find Duplicates',
+                          style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              scanning ? AppColors.danger : AppColors.secondary,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                        ),
+                      ),
+                    ),
+                  )
+                : SizedBox(
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      onPressed: scanning
+                          ? _ctrl.cancelScan
+                          : (_ctrl.rootPath.isEmpty ? null : _ctrl.startScan),
+                      icon: Icon(
+                        scanning ? Icons.stop_rounded : Icons.search_rounded,
+                        size: 16,
+                        color: AppColors.textPrimary,
+                      ),
+                      label: Text(
+                        scanning ? 'Stop' : 'Find Duplicates',
+                        style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            scanning ? AppColors.danger : AppColors.secondary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                      ),
+                    ),
+                  ),
+          ],
+        );
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.surfaceBorder),
           ),
-          const SizedBox(width: 10),
-          OutlinedButton.icon(
-            onPressed: scanning ? null : _ctrl.pickFolder,
-            icon: const Icon(Icons.folder_open_rounded, size: 16),
-            label: const Text('Browse'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textSecondary,
-              side: BorderSide(color: AppColors.surfaceBorder),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-          ),
-          const SizedBox(width: 10),
-          SizedBox(
-            height: 44,
-            child: ElevatedButton.icon(
-              onPressed: scanning
-                  ? _ctrl.cancelScan
-                  : (_ctrl.rootPath.isEmpty ? null : _ctrl.startScan),
-              icon: Icon(
-                scanning ? Icons.stop_rounded : Icons.search_rounded,
-                size: 16, color: AppColors.textPrimary,
-              ),
-              label: Text(
-                scanning ? 'Stop' : 'Find Duplicates',
-                style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: scanning ? AppColors.danger : AppColors.secondary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
-            ),
-          ),
-        ],
-      ),
+          child: isNarrow
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    folderBox,
+                    const SizedBox(height: 12),
+                    actionButtons,
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(child: folderBox),
+                    const SizedBox(width: 10),
+                    actionButtons,
+                  ],
+                ),
+        );
+      },
     );
   }
 

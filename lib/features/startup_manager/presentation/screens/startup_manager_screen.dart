@@ -276,35 +276,52 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.surfaceBorder),
                   ),
-                  child: Column(
-                    children: [
-                      // Table Column Headers
-                      _buildTableHeader(),
-                      const Divider(height: 1),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final tableWidth =
+                          constraints.maxWidth < 660 ? 660.0 : constraints.maxWidth;
 
-                      // Table Body Rows
-                      Expanded(
-                        child: _controller.isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : apps.isEmpty
-                                ? Center(
-                                    child: Text(
-                                      'No matching startup apps found',
-                                      style: TextStyle(
-                                          color: AppColors.textSecondary),
-                                    ),
-                                  )
-                                : ListView.builder(
-                                    key: const PageStorageKey('startup_apps_list'),
-                                    itemCount: apps.length,
-                                    itemBuilder: (context, index) {
-                                      final item = apps[index];
-                                      final isSelected = selected?.id == item.id;
-                                      return _buildTableRow(item, isSelected);
-                                    },
-                                  ),
-                      ),
-                    ],
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: tableWidth,
+                          child: Column(
+                            children: [
+                              // Table Column Headers
+                              _buildTableHeader(),
+                              const Divider(height: 1),
+
+                              // Table Body Rows
+                              Expanded(
+                                child: _controller.isLoading
+                                    ? const Center(
+                                        child: CircularProgressIndicator())
+                                    : apps.isEmpty
+                                        ? Center(
+                                            child: Text(
+                                              'No matching startup apps found',
+                                              style: TextStyle(
+                                                  color: AppColors.textSecondary),
+                                            ),
+                                          )
+                                        : ListView.builder(
+                                            key: const PageStorageKey(
+                                                'startup_apps_list'),
+                                            itemCount: apps.length,
+                                            itemBuilder: (context, index) {
+                                              final item = apps[index];
+                                              final isSelected =
+                                                  selected?.id == item.id;
+                                              return _buildTableRow(
+                                                  item, isSelected);
+                                            },
+                                          ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -338,22 +355,12 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
   }
 
   Widget _buildTopBar(StartupAppItem? selected) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'Startup apps',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.5,
-          ),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 650;
 
-        // Search Box (like Windows 11 Task Manager)
-        SizedBox(
-          width: 380,
+        final searchField = SizedBox(
+          width: isNarrow ? double.infinity : 340,
           height: 38,
           child: TextField(
             controller: _searchController,
@@ -378,8 +385,43 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
               ),
             ),
           ),
-        ),
-      ],
+        );
+
+        if (isNarrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Startup apps',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              searchField,
+            ],
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Startup apps',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+              ),
+            ),
+            searchField,
+          ],
+        );
+      },
     );
   }
 
@@ -387,7 +429,10 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
     final canEnable = selected != null && !selected.isEnabled;
     final canDisable = selected != null && selected.isEnabled;
 
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         // Enable Button
         OutlinedButton.icon(
@@ -403,7 +448,6 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
             foregroundColor: AppColors.success,
           ),
         ),
-        const SizedBox(width: 8),
 
         // Disable Button
         OutlinedButton.icon(
@@ -419,7 +463,6 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
             foregroundColor: AppColors.danger,
           ),
         ),
-        const SizedBox(width: 8),
 
         // Properties Button
         OutlinedButton.icon(
@@ -431,7 +474,6 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
         ),
-        const SizedBox(width: 8),
 
         // Create System Restore Point Button
         Tooltip(
@@ -446,7 +488,6 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 8),
 
         // Refresh Button
         IconButton(
@@ -454,8 +495,6 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
           onPressed: _controller.isLoading ? null : () => _controller.loadApps(),
           icon: const Icon(Icons.refresh_rounded, size: 18),
         ),
-
-        const Spacer(),
 
         // BIOS Time indicator (exact replica of Task Manager)
         Container(
@@ -466,6 +505,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
             border: Border.all(color: AppColors.surfaceBorder),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.speed_rounded,
                   size: 16, color: AppColors.primary),
@@ -501,14 +541,17 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
             flex: 4,
             child: _headerCell('Name', StartupSortField.name),
           ),
+          const SizedBox(width: 8),
           Expanded(
             flex: 3,
             child: _headerCell('Publisher', StartupSortField.publisher),
           ),
+          const SizedBox(width: 8),
           Expanded(
             flex: 2,
             child: _headerCell('Status', StartupSortField.status),
           ),
+          const SizedBox(width: 8),
           Expanded(
             flex: 2,
             child: _headerCell('Startup impact', StartupSortField.impact),
@@ -597,6 +640,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
             ),
 
             // Publisher Column
+            const SizedBox(width: 8),
             Expanded(
               flex: 3,
               child: Text(
@@ -609,6 +653,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
                 ),
               ),
             ),
+            const SizedBox(width: 8),
 
             // Status Column (Enabled / Disabled)
             Expanded(
@@ -640,6 +685,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
                 ],
               ),
             ),
+            const SizedBox(width: 8),
 
             // Startup Impact Column
             Expanded(

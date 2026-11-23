@@ -141,41 +141,39 @@ class _LargeFileFinderScreenState extends State<LargeFileFinderScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text('Min size:', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
-              const SizedBox(width: 10),
-              ...([50, 100, 250, 500, 1024]).map((mb) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: scanning ? null : () => _ctrl.setMinSizeMb(mb),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
+              ...([50, 100, 250, 500, 1024]).map((mb) => GestureDetector(
+                onTap: scanning ? null : () => _ctrl.setMinSizeMb(mb),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _ctrl.minSizeMb == mb
+                        ? AppColors.primary.withValues(alpha: 0.15)
+                        : AppColors.background,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
                       color: _ctrl.minSizeMb == mb
-                          ? AppColors.primary.withValues(alpha: 0.15)
-                          : AppColors.background,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _ctrl.minSizeMb == mb
-                            ? AppColors.primary.withValues(alpha: 0.5)
-                            : AppColors.surfaceBorder,
-                      ),
+                          ? AppColors.primary.withValues(alpha: 0.5)
+                          : AppColors.surfaceBorder,
                     ),
-                    child: Text(
-                      mb >= 1024 ? '${mb ~/ 1024} GB' : '$mb MB',
-                      style: TextStyle(
-                        color: _ctrl.minSizeMb == mb ? AppColors.primary : AppColors.textMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                  child: Text(
+                    mb >= 1024 ? '${mb ~/ 1024} GB' : '$mb MB',
+                    style: TextStyle(
+                      color: _ctrl.minSizeMb == mb ? AppColors.primary : AppColors.textMuted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               )),
-              const Spacer(),
               SizedBox(
-                height: 40,
+                height: 36,
                 child: ElevatedButton.icon(
                   onPressed: scanning ? _ctrl.cancelScan : _ctrl.startScan,
                   icon: Icon(
