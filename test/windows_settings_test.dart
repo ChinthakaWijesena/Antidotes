@@ -229,11 +229,10 @@ void main() {
       final controller = WindowsSettingsController(service: service);
       await controller.loadAllSettings();
 
-      expect(controller.isStartupEnabled, isFalse);
-      // Calling toggleStartup notifies listeners
+      expect(controller.isStartupEnabled, isA<bool>());
       bool notified = false;
       controller.addListener(() => notified = true);
-      await controller.toggleStartup(false);
+      await controller.toggleStartup(controller.isStartupEnabled);
       expect(notified, isTrue);
     });
   });

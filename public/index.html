@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password — Antidotes PC Optimizer</title>
+  <link rel="icon" type="image/png" href="/app_logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: #070B14;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(0, 210, 255, 0.12), transparent 45%),
+        radial-gradient(circle at 100% 100%, rgba(0, 102, 255, 0.08), transparent 35%);
+      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 460px;
+      background: #0E1626;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 40px 36px;
+      box-shadow: 
+        0 20px 40px -15px rgba(0, 0, 0, 0.7),
+        0 0 50px -10px rgba(0, 210, 255, 0.1);
+      backdrop-filter: blur(20px);
+      position: relative;
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 210, 255, 0.5), transparent);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .brand img {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 210, 255, 0.3);
+    }
+
+    .brand-text h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      color: #00D2FF;
+      text-transform: uppercase;
+    }
+
+    .title {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 13.5px;
+      color: #94A3B8;
+      margin-bottom: 26px;
+      line-height: 1.5;
+    }
+
+    .email-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 210, 255, 0.1);
+      border: 1px solid rgba(0, 210, 255, 0.25);
+      color: #38BDF8;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94A3B8;
+      margin-bottom: 7px;
+      letter-spacing: 0.3px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-input {
+      width: 100%;
+      background: #080D18;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 13px 44px 13px 14px;
+      font-size: 14px;
+      color: #FFFFFF;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .form-input:focus {
+      border-color: #00D2FF;
+      box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.15);
+      background: #0B1222;
+    }
+
+    .eye-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #64748B;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .eye-btn:hover {
+      color: #94A3B8;
+    }
+
+    /* Strength meter */
+    .strength-wrapper {
+      margin-top: 6px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .strength-bar {
+      height: 4px;
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      transition: background 0.3s ease;
+    }
+
+    .strength-text {
+      font-size: 11px;
+      margin-top: 4px;
+      color: #64748B;
+      font-weight: 500;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #00D2FF 0%, #0066FF 100%);
+      color: #060A12;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 20px -6px rgba(0, 210, 255, 0.5);
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px -6px rgba(0, 210, 255, 0.6);
+      filter: brightness(1.05);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .message-banner {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      margin-bottom: 18px;
+      line-height: 1.4;
+    }
+
+    .message-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #F87171;
+    }
+
+    .message-success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34D399;
+    }
+
+    /* States */
+    .state-view {
+      display: none;
+      text-align: center;
+    }
+
+    .state-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .icon-success {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #10B981;
+    }
+
+    .icon-error {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #EF4444;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(0, 210, 255, 0.15);
+      border-top-color: #00D2FF;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 11.5px;
+      color: #475569;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Brand Header -->
+    <div class="brand">
+      <img src="/app_logo.png" alt="Antidotes Logo" onerror="this.style.display='none'">
+      <div class="brand-text">
+        <h1>Antidotes</h1>
+        <p>PC Cleaner & Optimizer</p>
+      </div>
+    </div>
+
+    <!-- 1. LOADING STATE -->
+    <div id="state-loading" class="state-view" style="display: block;">
+      <div class="spinner"></div>
+      <h2 class="title" style="font-size: 18px;">Verifying Reset Link...</h2>
+      <p class="subtitle">Connecting securely to Antidotes authentication service.</p>
+    </div>
+
+    <!-- 2. FORM STATE -->
+    <div id="state-form" class="state-view">
+      <h2 class="title">Create New Password</h2>
+      <p class="subtitle">
+        Account: <br>
+        <span class="email-badge" id="user-email-display">user@example.com</span>
+      </p>
+
+      <div id="form-error" class="message-banner message-error"></div>
+
+      <form id="reset-form" onsubmit="handlePasswordSubmit(event)">
+        <!-- New Password -->
+        <div class="form-group">
+          <label class="form-label">NEW PASSWORD</label>
+          <div class="input-wrapper">
+            <input type="password" id="new-password" class="form-input" placeholder="Enter at least 6 characters" required oninput="evaluateStrength()">
+            <button type="button" class="eye-btn" onclick="togglePasswordVisibility('new-password', this)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+          <div class="strength-wrapper">
+            <div class="strength-bar" id="bar-1"></div>
+            <div class="strength-bar" id="bar-2"></div>
+            <div class="strength-bar" id="bar-3"></div>
+            <div class="strength-bar" id="bar-4"></div>
+          </div>
+          <div class="strength-text" id="strength-label">Use 6+ characters with numbers or symbols</div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <label class="form-label">CONFIRM PASSWORD</label>
+          <div class="input-wrapper">
+            <input type="password" id="confirm-password" class="form-input" placeholder="Re-enter your new password" required>
+            <button type="button" class="eye-btn" onclick="togglePasswordVisibility('confirm-password', this)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn-submit">
+          <span>Save New Password</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- 3. SUCCESS STATE -->
+    <div id="state-success" class="state-view">
+      <div class="state-icon icon-success">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"></path></svg>
+      </div>
+      <h2 class="title">Password Reset Complete!</h2>
+      <p class="subtitle">Your account password has been updated successfully. You can now launch the <strong>Antidotes</strong> desktop app and sign in.</p>
+      <div style="margin-top: 24px; padding: 12px; background: rgba(0, 210, 255, 0.08); border-radius: 12px; border: 1px solid rgba(0, 210, 255, 0.2); font-size: 13px; color: #38BDF8;">
+        ✓ Safe to close this browser tab
+      </div>
+    </div>
+
+    <!-- 4. ERROR STATE -->
+    <div id="state-error" class="state-view">
+      <div class="state-icon icon-error">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      </div>
+      <h2 class="title" id="error-title">Link Expired or Invalid</h2>
+      <p class="subtitle" id="error-desc">This password reset link has already been used or has expired for security reasons. Please open the Antidotes app and request a new password reset link.</p>
+    </div>
+
+    <div class="footer-note">
+      Protected by Antidotes Cloud Security • 256-bit Encryption
+    </div>
+  </div>
+
+  <!-- Firebase JavaScript SDK Modular -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, verifyPasswordResetCode, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCMsPHfM5bNFSaSM8Ps3B4wpySh3SZeBmI",
+      authDomain: "antidotes-df58c.firebaseapp.com",
+      projectId: "antidotes-df58c",
+      storageBucket: "antidotes-df58c.firebasestorage.app",
+      messagingSenderId: "926819882297",
+      appId: "1:926819882297:web:d11ffe6650ececa240c4e8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    const actionCode = urlParams.get('oobCode');
+
+    let verifiedEmail = "";
+
+    function showState(stateId) {
+      document.querySelectorAll('.state-view').forEach(el => el.style.display = 'none');
+      const target = document.getElementById(stateId);
+      if (target) target.style.display = 'block';
+    }
+
+    async function initAction() {
+      if (mode !== 'resetPassword' || !actionCode) {
+        showState('state-error');
+        document.getElementById('error-title').innerText = "Invalid Action Link";
+        document.getElementById('error-desc').innerText = "The link parameters are missing or incorrect. Please request a new password reset link from the Antidotes app.";
+        return;
+      }
+
+      try {
+        verifiedEmail = await verifyPasswordResetCode(auth, actionCode);
+        document.getElementById('user-email-display').innerText = verifiedEmail;
+        showState('state-form');
+      } catch (err) {
+        console.error("Verification failed:", err);
+        showState('state-error');
+      }
+    }
+
+    window.handlePasswordSubmit = async function(event) {
+      event.preventDefault();
+      const p1 = document.getElementById('new-password').value;
+      const p2 = document.getElementById('confirm-password').value;
+      const errBox = document.getElementById('form-error');
+      const submitBtn = document.getElementById('submit-btn');
+
+      errBox.style.display = 'none';
+
+      if (p1.length < 6) {
+        errBox.innerText = "Password must be at least 6 characters long.";
+        errBox.style.display = 'block';
+        return;
+      }
+
+      if (p1 !== p2) {
+        errBox.innerText = "Passwords do not match. Please ensure both fields are identical.";
+        errBox.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Saving...</span>`;
+
+      try {
+        await confirmPasswordReset(auth, actionCode, p1);
+        showState('state-success');
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>Save New Password</span>`;
+        errBox.innerText = err.message || "Failed to update password. Please try again.";
+        errBox.style.display = 'block';
+      }
+    };
+
+    window.togglePasswordVisibility = function(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+      } else {
+        input.type = 'password';
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+      }
+    };
+
+    window.evaluateStrength = function() {
+      const val = document.getElementById('new-password').value;
+      let score = 0;
+      if (val.length >= 6) score++;
+      if (val.length >= 10) score++;
+      if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+      if (/[0-9]/.test(val) || /[^A-Za-z0-9]/.test(val)) score++;
+
+      const b1 = document.getElementById('bar-1');
+      const b2 = document.getElementById('bar-2');
+      const b3 = document.getElementById('bar-3');
+      const b4 = document.getElementById('bar-4');
+      const lbl = document.getElementById('strength-label');
+
+      [b1, b2, b3, b4].forEach(b => b.style.background = 'rgba(255,255,255,0.08)');
+
+      if (score === 1) {
+        b1.style.background = '#EF4444';
+        lbl.innerText = 'Weak password';
+        lbl.style.color = '#EF4444';
+      } else if (score === 2) {
+        b1.style.background = '#F59E0B';
+        b2.style.background = '#F59E0B';
+        lbl.innerText = 'Moderate password';
+        lbl.style.color = '#F59E0B';
+      } else if (score === 3) {
+        b1.style.background = '#10B981';
+        b2.style.background = '#10B981';
+        b3.style.background = '#10B981';
+        lbl.innerText = 'Strong password';
+        lbl.style.color = '#10B981';
+      } else if (score >= 4) {
+        b1.style.background = '#00D2FF';
+        b2.style.background = '#00D2FF';
+        b3.style.background = '#00D2FF';
+        b4.style.background = '#00D2FF';
+        lbl.innerText = 'Very strong password!';
+        lbl.style.color = '#00D2FF';
+      } else {
+        lbl.innerText = 'Use 6+ characters with numbers or symbols';
+        lbl.style.color = '#64748B';
+      }
+    };
+
+    initAction();
+  </script>
+</body>
+</html>

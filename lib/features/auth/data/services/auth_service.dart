@@ -94,7 +94,13 @@ class FirebaseAuthService implements AuthService {
 
   @override
   Future<void> sendPasswordResetEmail(String email) async {
-    await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
+    await _firebaseAuth.sendPasswordResetEmail(
+      email: email.trim(),
+      actionCodeSettings: fb_auth.ActionCodeSettings(
+        url: 'https://antidotes-df58c.web.app/reset-password',
+        handleCodeInApp: false,
+      ),
+    );
   }
 
   @override

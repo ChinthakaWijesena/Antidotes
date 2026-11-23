@@ -1,1 +1,37 @@
-{"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"antidotes-df58c","configurations":{"macos":"1:926819882297:ios:012a05385d4ec15640c4e8","windows":"1:926819882297:web:d11ffe6650ececa240c4e8"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "antidotes-df58c",
+          "configurations": {
+            "macos": "1:926819882297:ios:012a05385d4ec15640c4e8",
+            "windows": "1:926819882297:web:d11ffe6650ececa240c4e8"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/__/auth/action",
+        "destination": "/reset-password.html"
+      },
+      {
+        "source": "/reset-password",
+        "destination": "/reset-password.html"
+      },
+      {
+        "source": "**",
+        "destination": "/reset-password.html"
+      }
+    ]
+  }
+}
