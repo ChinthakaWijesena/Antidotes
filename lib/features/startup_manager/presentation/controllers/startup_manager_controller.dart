@@ -123,10 +123,18 @@ class StartupManagerController extends ChangeNotifier {
       orElse: () => item,
     );
 
+    // Optimistic UI update: instantly update state and notify listeners so Switch animates with 0ms latency
+    final previousState = target.isEnabled;
+    target.isEnabled = enable;
+    if (_selectedItem?.id == target.id) {
+      _selectedItem = target;
+    }
+    notifyListeners();
+
     final ok = await _service.toggleStartupApp(target, enable);
-    if (ok) {
-      target.isEnabled = enable;
-      // Also update selectedItem if it was the one toggled
+    if (!ok) {
+      // Revert if system operation failed
+      target.isEnabled = previousState;
       if (_selectedItem?.id == target.id) {
         _selectedItem = target;
       }

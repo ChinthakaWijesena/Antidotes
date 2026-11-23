@@ -4,17 +4,24 @@ import '../../data/models/nav_topic.dart';
 import 'sidebar_footer.dart';
 import 'sidebar_header.dart';
 import 'sidebar_topic_tile.dart';
+import 'sidebar_profile_tile.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../profile/presentation/controllers/profile_controller.dart';
 
 /// Categorized, collapsible sidebar navigation for Antidotes.
 /// Organizes tools into Topics (Sections) and Subtopics (Tools).
 class AppSidebar extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
+  final AuthController? authController;
+  final ProfileController? profileController;
 
   const AppSidebar({
     super.key,
     required this.selectedIndex,
     required this.onDestinationSelected,
+    this.authController,
+    this.profileController,
   });
 
   @override
@@ -87,6 +94,12 @@ class _AppSidebarState extends State<AppSidebar> {
                 }).toList(),
               ),
             ),
+          ),
+
+          // User Profile Card & Cloud Sync
+          SidebarProfileTile(
+            authController: widget.authController,
+            profileController: widget.profileController,
           ),
 
           // Real-time Protection Status Footer

@@ -15,10 +15,19 @@ import 'package:antidotes/features/storage_tools/presentation/screens/large_file
 import 'package:antidotes/features/storage_tools/presentation/screens/duplicate_finder_screen.dart';
 import 'package:antidotes/features/storage_tools/presentation/screens/file_shredder_screen.dart';
 import 'package:antidotes/features/disk_health/presentation/screens/disk_health_screen.dart';
+import 'package:antidotes/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:antidotes/features/profile/presentation/controllers/profile_controller.dart';
 import '../widgets/app_sidebar.dart';
 
 class MainShellScreen extends StatefulWidget {
-  const MainShellScreen({super.key});
+  final AuthController? authController;
+  final ProfileController? profileController;
+
+  const MainShellScreen({
+    super.key,
+    this.authController,
+    this.profileController,
+  });
 
   @override
   State<MainShellScreen> createState() => _MainShellScreenState();
@@ -43,6 +52,8 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 _selectedNavIndex = index;
               });
             },
+            authController: widget.authController,
+            profileController: widget.profileController,
           ),
 
           // Main View Content

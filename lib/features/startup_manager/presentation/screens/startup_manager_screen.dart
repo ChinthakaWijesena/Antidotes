@@ -554,7 +554,7 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
     return InkWell(
       key: ValueKey(item.id),
       onTap: () => _controller.selectItem(item),
-      onDoubleTap: () => _showPropertiesDialog(item),
+      onSecondaryTap: () => _showPropertiesDialog(item),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
@@ -670,8 +670,9 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
                 activeTrackColor: AppColors.primary.withValues(alpha: 0.35),
                 inactiveThumbColor: AppColors.textMuted,
                 inactiveTrackColor: AppColors.surfaceLight,
-                onChanged: (val) async {
-                  await _controller.toggleApp(item, val);
+                onChanged: (val) {
+                  _controller.selectItem(item);
+                  _controller.toggleApp(item, val);
                 },
               ),
             ),
