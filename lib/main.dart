@@ -1,12 +1,9 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_scope.dart';
 import 'core/theme/system_theme_controller.dart';
-import 'core/utils/admin_helper.dart';
 import 'features/auth/data/services/auth_service.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'features/auth/presentation/screens/auth_gate.dart';
@@ -16,15 +13,8 @@ import 'features/profile/presentation/controllers/profile_controller.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // In release mode (when opened by user), automatically elevate to Administrator
-  if (Platform.isWindows && kReleaseMode && !args.contains('--no-elevate')) {
-    final isAdmin = await AdminHelper.isRunningAsAdmin();
-    if (!isAdmin) {
-      await AdminHelper.restartAsAdmin();
-      return;
-    }
-  }
+  // Admin elevation is handled by the Windows EXE manifest (requireAdministrator).
+  // The manifest guarantees the process always starts elevated — no manual restart needed.
 
   // Initialize Firebase Cloud Services
   AuthController? authController;
