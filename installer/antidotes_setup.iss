@@ -40,6 +40,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "startwithwindows"; Description: "Start Antidotes automatically when Windows starts"; GroupDescription: "Windows Integration"; Flags: checkedonce
 
 [Files]
 ; All release output files and subdirectories
@@ -54,6 +55,9 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 [Registry]
 ; Automatically configure the installed app to always run as Administrator and display the UAC Shield icon badge
 Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"; ValueType: String; ValueName: "{app}\{#MyAppExeName}"; ValueData: "~ RUNASADMIN"; Flags: uninsdeletevalue
+
+; Run on Windows startup (automatically placed in System Tray Overflow Menu)
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Antidotes"; ValueData: """{app}\{#MyAppExeName}"" --minimized"; Tasks: startwithwindows; Flags: uninsdeletevalue
 
 [Run]
 ; Option to launch the application immediately after install (shellexec prevents CreateProcess 740 elevation error)

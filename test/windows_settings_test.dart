@@ -223,6 +223,19 @@ void main() {
       expect(controller.virtualMemoryConfig!.initialSizeMb, 12288);
       expect(controller.virtualMemoryConfig!.maximumSizeMb, 24576);
     });
+
+    test('startup state loads and notifies listeners on toggle', () async {
+      final service = FakeWindowsSettingsService();
+      final controller = WindowsSettingsController(service: service);
+      await controller.loadAllSettings();
+
+      expect(controller.isStartupEnabled, isFalse);
+      // Calling toggleStartup notifies listeners
+      bool notified = false;
+      controller.addListener(() => notified = true);
+      await controller.toggleStartup(false);
+      expect(notified, isTrue);
+    });
   });
 }
 

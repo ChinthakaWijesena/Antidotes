@@ -1,6 +1,8 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
+#include <algorithm>
+#include <string>
 
 #include "flutter_window.h"
 #include "utils.h"
@@ -13,18 +15,36 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     CreateAndAttachConsole();
   }
 
+  std::vector<std::string> command_line_arguments =
+      GetCommandLineArguments();
+
+  bool start_minimized = false;
+  for (const auto& arg : command_line_arguments) {
+    if (arg == "--minimized" || arg == "-minimized") {
+      start_minimized = true;
+      break;
+    }
+  }
+
+  // Single-instance check: if already running, bring existing window to foreground and exit this process
+  HWND existing_window = ::FindWindow(L"FLUTTER_RUNNER_WIN32_WINDOW", L"antidotes");
+  if (existing_window != nullptr) {
+    if (!start_minimized) {
+      ::ShowWindow(existing_window, SW_SHOW);
+      ::ShowWindow(existing_window, SW_RESTORE);
+      ::SetForegroundWindow(existing_window);
+    }
+    return EXIT_SUCCESS;
+  }
+
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
-
-  std::vector<std::string> command_line_arguments =
-      GetCommandLineArguments();
-
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
-  FlutterWindow window(project);
+  FlutterWindow window(project, start_minimized);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
   if (!window.Create(L"antidotes", origin, size)) {

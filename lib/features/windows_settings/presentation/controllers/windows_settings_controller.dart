@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:antidotes/core/services/app_startup_service.dart';
 import 'package:antidotes/features/windows_settings/data/models/env_variable_item.dart';
 import 'package:antidotes/features/windows_settings/data/models/performance_preset.dart';
 import 'package:antidotes/features/windows_settings/data/models/power_scheme_item.dart';
@@ -10,6 +11,7 @@ class WindowsSettingsController extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isLightMode = false;
+  bool _isStartupEnabled = false;
   PerformancePreset _performancePreset = PerformancePreset.letWindowsChoose;
   List<PowerSchemeItem> _powerSchemes = [];
   List<EnvVariableItem> _envVariables = [];
@@ -23,6 +25,7 @@ class WindowsSettingsController extends ChangeNotifier {
   WindowsSettingsService get service => _service;
   bool get isLoading => _isLoading;
   bool get isLightMode => _isLightMode;
+  bool get isStartupEnabled => _isStartupEnabled;
   PerformancePreset get performancePreset => _performancePreset;
   List<PowerSchemeItem> get powerSchemes => _powerSchemes;
   VirtualMemoryConfig? get virtualMemoryConfig => _virtualMemoryConfig;
@@ -44,6 +47,7 @@ class WindowsSettingsController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      _isStartupEnabled = await AppStartupService.isStartupEnabled();
       _isLightMode = await _service.getWindowsThemeIsLight();
       _performancePreset = await _service.getVisualEffectsPreset();
       _powerSchemes = await _service.getPowerSchemes();
@@ -52,6 +56,14 @@ class WindowsSettingsController extends ChangeNotifier {
     } catch (_) {}
 
     _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> toggleStartup(bool enable) async {
+    _isStartupEnabled = enable;
+    notifyListeners();
+    await AppStartupService.setStartupEnabled(enable);
+    _isStartupEnabled = await AppStartupService.isStartupEnabled();
     notifyListeners();
   }
 
