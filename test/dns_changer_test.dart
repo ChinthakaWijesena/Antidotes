@@ -268,5 +268,20 @@ void main() {
       final cloudflare = controller.providers.firstWhere((p) => p.id == 'cloudflare');
       expect(cloudflare.latencyMs, 15);
     });
+
+    test('startAutoLatencyRefresh immediately benchmarks and disposes cleanly', () async {
+      final service = FakeDnsChangerService();
+      final controller = DnsChangerController(service: service);
+      await controller.loadData();
+
+      controller.startAutoLatencyRefresh();
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      final cloudflare = controller.providers.firstWhere((p) => p.id == 'cloudflare');
+      expect(cloudflare.latencyMs, 15);
+
+      controller.stopAutoLatencyRefresh();
+      controller.dispose();
+    });
   });
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:antidotes/features/dns_changer/data/models/dns_provider_item.dart';
 import 'package:antidotes/features/dns_changer/data/models/family_shield_test_result.dart';
@@ -13,8 +14,11 @@ class DnsChangerController extends ChangeNotifier {
   bool _isLoading = false;
   bool _isApplying = false;
   bool _isTestingLatency = false;
+  bool _isBenchmarkRunning = false;
   bool _isTestingShield = false;
   String _statusMessage = '';
+  Timer? _autoLatencyTimer;
+  bool _isDisposed = false;
 
   bool _isBrowserDohBlocked = false;
   bool _isSafeSearchEnforced = false;
@@ -234,23 +238,58 @@ class DnsChangerController extends ChangeNotifier {
     return success;
   }
 
-  Future<void> benchmarkAllLatencies() async {
-    _isTestingLatency = true;
-    notifyListeners();
+  /// Starts automatic parallel latency benchmarking immediately and repeats every 10 seconds.
+  void startAutoLatencyRefresh() {
+    _autoLatencyTimer?.cancel();
+    if (_providers.isNotEmpty) {
+      benchmarkAllLatencies(silent: true);
+    }
+    _autoLatencyTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (_isDisposed || _providers.isEmpty) return;
+      benchmarkAllLatencies(silent: true);
+    });
+  }
 
-    final updated = <DnsProviderItem>[];
-    for (final p in _providers) {
-      if (p.isDefaultDhcp) {
-        updated.add(p);
-        continue;
-      }
+  /// Stops the periodic auto-latency timer.
+  void stopAutoLatencyRefresh() {
+    _autoLatencyTimer?.cancel();
+    _autoLatencyTimer = null;
+  }
 
-      final latency = await _service.testLatency(p.primaryIpv4);
-      updated.add(p.copyWith(latencyMs: latency));
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _autoLatencyTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> benchmarkAllLatencies({bool silent = false}) async {
+    if (_isBenchmarkRunning || _isDisposed) return;
+    _isBenchmarkRunning = true;
+
+    if (!silent) {
+      _isTestingLatency = true;
+      notifyListeners();
     }
 
-    _providers = updated;
-    _isTestingLatency = false;
-    notifyListeners();
+    try {
+      final updated = await Future.wait(
+        _providers.map((p) async {
+          if (p.isDefaultDhcp) return p;
+          final latency = await _service.testLatency(p.primaryIpv4);
+          return p.copyWith(latencyMs: latency);
+        }),
+      );
+
+      if (!_isDisposed) {
+        _providers = updated;
+      }
+    } finally {
+      _isBenchmarkRunning = false;
+      _isTestingLatency = false;
+      if (!_isDisposed) {
+        notifyListeners();
+      }
+    }
   }
 }

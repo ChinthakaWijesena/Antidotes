@@ -7,6 +7,8 @@ import 'package:antidotes/features/dns_changer/presentation/widgets/custom_dns_m
 import 'package:antidotes/features/dns_changer/presentation/widgets/dns_angel_panel.dart';
 import 'package:antidotes/features/dns_changer/presentation/widgets/dns_provider_card.dart';
 
+enum DnsSortOrder { defaultOrder, lowToHigh, highToLow }
+
 class DnsChangerScreen extends StatefulWidget {
   final DnsChangerController? controller;
 
@@ -20,13 +22,18 @@ class _DnsChangerScreenState extends State<DnsChangerScreen> {
   late final DnsChangerController _controller;
   int _activeTab = 0; // 0 = Family Shield (DNS Angel), 1 = All DNS Servers
   int _categoryFilter = 0; // 0 = All, 1 = Adult Block & Family, 2 = Fast & Privacy, 3 = Security & AdBlock
+  DnsSortOrder _sortOrder = DnsSortOrder.defaultOrder;
 
   @override
   void initState() {
     super.initState();
     _controller = widget.controller ?? DnsChangerController();
     _controller.addListener(_onControllerUpdate);
-    _controller.loadData();
+    _controller.loadData().then((_) {
+      if (mounted) {
+        _controller.startAutoLatencyRefresh();
+      }
+    });
   }
 
   @override
@@ -436,27 +443,47 @@ class _DnsChangerScreenState extends State<DnsChangerScreen> {
 
   List<DnsProviderItem> get _filteredProviders {
     final all = _controller.providers;
+    List<DnsProviderItem> filtered;
     switch (_categoryFilter) {
       case 1: // Adult Block & Family
-        return all.where((p) => p.isFamilySafe).toList();
+        filtered = all.where((p) => p.isFamilySafe).toList();
+        break;
       case 2: // Fast & Privacy
-        return all.where((p) => [
+        filtered = all.where((p) => [
           'cloudflare',
           'google',
           'controld',
           'dhcp',
         ].contains(p.id)).toList();
+        break;
       case 3: // Security & AdBlock
-        return all.where((p) => [
+        filtered = all.where((p) => [
           'quad9',
           'adguard',
           'cloudflare_family',
           'opendns',
           'cleanbrowsing',
         ].contains(p.id)).toList();
+        break;
       default:
-        return all;
+        filtered = List<DnsProviderItem>.from(all);
     }
+
+    if (_sortOrder == DnsSortOrder.lowToHigh) {
+      filtered.sort((a, b) {
+        final la = a.latencyMs ?? 999999;
+        final lb = b.latencyMs ?? 999999;
+        return la.compareTo(lb);
+      });
+    } else if (_sortOrder == DnsSortOrder.highToLow) {
+      filtered.sort((a, b) {
+        final la = a.latencyMs ?? -1;
+        final lb = b.latencyMs ?? -1;
+        return lb.compareTo(la);
+      });
+    }
+
+    return filtered;
   }
 
   Widget _buildCategoryFilters() {
@@ -467,55 +494,174 @@ class _DnsChangerScreenState extends State<DnsChangerScreen> {
       {'label': '🔒 Security & AdBlock', 'icon': Icons.shield_rounded, 'index': 3},
     ];
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: filters.map((f) {
-          final isSelected = _categoryFilter == f['index'];
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () {
-                setState(() {
-                  _categoryFilter = f['index'] as int;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary.withValues(alpha: 0.18) : AppColors.surfaceLight,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final filterChips = SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: filters.map((f) {
+              final isSelected = _categoryFilter == f['index'];
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: InkWell(
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.surfaceBorder,
-                    width: isSelected ? 1.4 : 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      f['icon'] as IconData,
-                      size: 15,
-                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      f['label'] as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  onTap: () {
+                    setState(() {
+                      _categoryFilter = f['index'] as int;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary.withValues(alpha: 0.18)
+                          : AppColors.surfaceLight,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primary : AppColors.surfaceBorder,
+                        width: isSelected ? 1.4 : 1,
                       ),
                     ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          f['icon'] as IconData,
+                          size: 15,
+                          color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          f['label'] as String,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        );
+
+        final sortControls = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Live auto-refresh badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: AppColors.success,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Auto 10s',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Latency Sort Dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _sortOrder != DnsSortOrder.defaultOrder
+                      ? AppColors.primary
+                      : AppColors.surfaceBorder,
+                ),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<DnsSortOrder>(
+                  value: _sortOrder,
+                  isDense: true,
+                  dropdownColor: AppColors.surface,
+                  icon: Icon(
+                    Icons.sort_rounded,
+                    size: 16,
+                    color: _sortOrder != DnsSortOrder.defaultOrder
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                  ),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _sortOrder != DnsSortOrder.defaultOrder
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                    fontWeight: _sortOrder != DnsSortOrder.defaultOrder
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: DnsSortOrder.defaultOrder,
+                      child: Text('Sort: Default'),
+                    ),
+                    DropdownMenuItem(
+                      value: DnsSortOrder.lowToHigh,
+                      child: Text('Ping: Low → High'),
+                    ),
+                    DropdownMenuItem(
+                      value: DnsSortOrder.highToLow,
+                      child: Text('Ping: High → Low'),
+                    ),
                   ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => _sortOrder = val);
+                    }
+                  },
                 ),
               ),
             ),
+          ],
+        );
+
+        if (constraints.maxWidth < 860) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              filterChips,
+              const SizedBox(height: 10),
+              sortControls,
+            ],
           );
-        }).toList(),
-      ),
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: filterChips),
+            const SizedBox(width: 12),
+            sortControls,
+          ],
+        );
+      },
     );
   }
 }

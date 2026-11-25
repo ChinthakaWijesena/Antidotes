@@ -232,7 +232,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'v1.0.3',
+                        'v1.0.4',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
