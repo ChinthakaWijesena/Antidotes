@@ -184,7 +184,7 @@ void main() {
       );
 
       expect(find.text('Antidotes Updates'), findsOneWidget);
-      expect(find.text('v1.0.2'), findsOneWidget);
+      expect(find.text('v1.0.3'), findsOneWidget);
       expect(find.text('Check for Updates'), findsOneWidget);
     });
   });
