@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/app_icon_widget.dart';
 import '../../data/models/startup_app_item.dart';
 
 class StartupAppTile extends StatelessWidget {
@@ -28,31 +29,14 @@ class StartupAppTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Letter or App Avatar
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: item.isEnabled
-                  ? AppColors.primary.withValues(alpha: 0.12)
-              : AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: item.isEnabled
-                    ? AppColors.primary.withValues(alpha: 0.3)
-                    : AppColors.surfaceBorder,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                item.name.isNotEmpty ? item.name[0].toUpperCase() : '?',
-                style: TextStyle(
-                  color: item.isEnabled ? AppColors.primary : AppColors.textMuted,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+          // Real App Icon / Brand / Avatar
+          AppIconWidget(
+            name: item.name,
+            iconPath: item.executablePath,
+            iconCachePath: item.iconCachePath,
+            brandColor: item.isEnabled ? AppColors.primary : AppColors.textMuted,
+            size: 44,
+            borderRadius: 10,
           ),
           const SizedBox(width: 16),
 

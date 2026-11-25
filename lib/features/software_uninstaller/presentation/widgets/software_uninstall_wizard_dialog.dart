@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:antidotes/core/constants/app_colors.dart';
 import 'package:antidotes/core/services/system_restore_service.dart';
+import 'package:antidotes/core/widgets/app_icon_widget.dart';
 import 'package:antidotes/features/software_uninstaller/data/models/installed_app_item.dart';
 import 'package:antidotes/features/software_uninstaller/data/models/leftover_item.dart';
 import 'package:antidotes/features/software_uninstaller/data/models/uninstall_scan_mode.dart';
@@ -336,15 +337,13 @@ class _SoftwareUninstallWizardDialogState extends State<SoftwareUninstallWizardD
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF57C00).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFF57C00).withValues(alpha: 0.4)),
-              ),
-              child: Icon(widget.app.defaultIcon, size: 34, color: const Color(0xFFF57C00)),
+            AppIconWidget(
+              name: widget.app.name,
+              iconPath: widget.app.iconPath,
+              iconCachePath: widget.app.iconCachePath,
+              fallbackIcon: widget.app.defaultIcon,
+              size: 56,
+              borderRadius: 10,
             ),
             const SizedBox(width: 20),
             Expanded(

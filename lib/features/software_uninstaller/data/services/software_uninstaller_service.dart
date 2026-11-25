@@ -6,6 +6,12 @@ import 'package:antidotes/features/software_uninstaller/data/models/uninstall_sc
 
 class SoftwareUninstallerService {
   static const String _getInstalledAppsScript = r'''
+$cacheDir = "$env:LOCALAPPDATA\Antidotes\IconCache"
+if (-not (Test-Path $cacheDir)) {
+    New-Item -ItemType Directory -Force -Path $cacheDir -ErrorAction SilentlyContinue | Out-Null
+}
+Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
+
 $paths = @(
     "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall",
     "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
@@ -29,6 +35,35 @@ foreach ($base in $paths) {
                         $sizeKb = [int]$prop.EstimatedSize
                     }
                     $is64 = ($_.PsPath -notmatch 'Wow6432Node')
+
+                    $iconCache = ""
+                    $targetIcon = ""
+                    if ($prop.DisplayIcon) {
+                        $targetIcon = $prop.DisplayIcon.Trim('"', ' ').Split(',')[0].Trim()
+                    }
+                    if ((-not $targetIcon -or -not (Test-Path $targetIcon)) -and $prop.InstallLocation) {
+                        $loc = $prop.InstallLocation.Trim('"', ' ')
+                        if (Test-Path $loc) {
+                            $firstExe = Get-ChildItem -Path $loc -Filter *.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+                            if ($firstExe) { $targetIcon = $firstExe.FullName }
+                        }
+                    }
+                    if ($targetIcon -and (Test-Path $targetIcon)) {
+                        $hash = [Math]::Abs($targetIcon.ToLower().GetHashCode())
+                        $outPng = "$cacheDir\$hash.png"
+                        if (Test-Path $outPng) {
+                            $iconCache = $outPng
+                        } else {
+                            try {
+                                $ico = [System.Drawing.Icon]::ExtractAssociatedIcon($targetIcon)
+                                if ($ico) {
+                                    $ico.ToBitmap().Save($outPng, [System.Drawing.Imaging.ImageFormat]::Png)
+                                    $ico.Dispose()
+                                    $iconCache = $outPng
+                                }
+                            } catch {}
+                        }
+                    }
                     
                     $apps += [PSCustomObject]@{
                         Id = $_.PSChildName
@@ -40,6 +75,7 @@ foreach ($base in $paths) {
                         UninstallString = [string]$prop.UninstallString
                         InstallLocation = if ($prop.InstallLocation) { [string]$prop.InstallLocation } else { "" }
                         DisplayIcon = if ($prop.DisplayIcon) { [string]$prop.DisplayIcon } else { "" }
+                        IconCachePath = $iconCache
                         Is64Bit = $is64
                     }
                 }
@@ -82,6 +118,7 @@ $apps | ConvertTo-Json -Depth 2 -Compress
               uninstallString: map['UninstallString']?.toString() ?? '',
               installLocation: map['InstallLocation']?.toString() ?? '',
               iconPath: map['DisplayIcon']?.toString() ?? '',
+              iconCachePath: map['IconCachePath']?.toString() ?? '',
               is64Bit: map['Is64Bit'] == true,
             );
           }).toList();

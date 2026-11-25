@@ -11,6 +11,7 @@ class InstalledAppItem {
   final String uninstallString;
   final String installLocation;
   final String iconPath;
+  final String iconCachePath;
   final bool is64Bit;
 
   const InstalledAppItem({
@@ -23,6 +24,7 @@ class InstalledAppItem {
     required this.uninstallString,
     this.installLocation = '',
     this.iconPath = '',
+    this.iconCachePath = '',
     this.is64Bit = true,
   });
 
@@ -86,6 +88,7 @@ class InstalledAppItem {
     String? uninstallString,
     String? installLocation,
     String? iconPath,
+    String? iconCachePath,
     bool? is64Bit,
   }) {
     return InstalledAppItem(
@@ -98,6 +101,7 @@ class InstalledAppItem {
       uninstallString: uninstallString ?? this.uninstallString,
       installLocation: installLocation ?? this.installLocation,
       iconPath: iconPath ?? this.iconPath,
+      iconCachePath: iconCachePath ?? this.iconCachePath,
       is64Bit: is64Bit ?? this.is64Bit,
     );
   }

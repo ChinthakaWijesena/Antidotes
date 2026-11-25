@@ -12,6 +12,7 @@ class StartupAppItem {
   final String publisher;
   final String command;
   final String executablePath;
+  final String iconCachePath;
   final String location;
   final String locationType; // 'UserRegistry', 'MachineRegistry', 'MachineRegistry32', 'StartupFolder', 'UWP'
   final String packageFamilyName;
@@ -25,6 +26,7 @@ class StartupAppItem {
     required this.publisher,
     required this.command,
     required this.executablePath,
+    this.iconCachePath = '',
     required this.location,
     required this.locationType,
     required this.packageFamilyName,
@@ -58,13 +60,16 @@ class StartupAppItem {
     final pfn = json['PackageFamilyName']?.toString() ?? '';
     final tId = json['TaskId']?.toString() ?? '';
     final id = json['Id']?.toString() ?? '${locType}_$name';
+    final exe = json['ExecutablePath']?.toString() ?? cmd;
+    final iconCache = json['IconCachePath']?.toString() ?? '';
 
     return StartupAppItem(
       id: id,
       name: name,
       publisher: pub.isEmpty ? 'Unknown' : pub,
       command: cmd,
-      executablePath: cmd,
+      executablePath: exe.isNotEmpty ? exe : cmd,
+      iconCachePath: iconCache,
       location: loc,
       locationType: locType,
       packageFamilyName: pfn,

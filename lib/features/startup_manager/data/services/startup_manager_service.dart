@@ -11,12 +11,35 @@ class StartupDataResult {
 
 class StartupManagerService {
   static const String _powershellScript = r'''
+$cacheDir = "$env:LOCALAPPDATA\Antidotes\IconCache"
+if (-not (Test-Path $cacheDir)) {
+    New-Item -ItemType Directory -Force -Path $cacheDir -ErrorAction SilentlyContinue | Out-Null
+}
+Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
+
 $allApps = @()
 
 $hkcuRunAppr = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
 $hklmRunAppr = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
 $hklmRun32Appr = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32"
 $folderAppr = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder"
+
+function Get-IconCachePath($targetPath) {
+    if ($targetPath -and (Test-Path $targetPath)) {
+        $hash = [Math]::Abs($targetPath.ToLower().GetHashCode())
+        $outPng = "$script:cacheDir\$hash.png"
+        if (Test-Path $outPng) { return $outPng }
+        try {
+            $ico = [System.Drawing.Icon]::ExtractAssociatedIcon($targetPath)
+            if ($ico) {
+                $ico.ToBitmap().Save($outPng, [System.Drawing.Imaging.ImageFormat]::Png)
+                $ico.Dispose()
+                return $outPng
+            }
+        } catch {}
+    }
+    return ""
+}
 
 function Get-ApprovedMap($path) {
     $map = @{}
@@ -83,11 +106,14 @@ function Read-RegRun($regPath, $locName, $map, $locType) {
                     elseif ($l -like '*idm*' -or $l -like '*internet download*') { $pub = "Tonec Inc." }
                     else { $pub = "Unknown" }
                 }
+                $iconCache = Get-IconCachePath $exe
                 $items += [PSCustomObject]@{
                     Id = "$locType`_$name"
                     Name = $name
                     Publisher = $pub
                     Command = $cmd
+                    ExecutablePath = $exe
+                    IconCachePath = $iconCache
                     Location = $locName
                     LocationType = $locType
                     Type = "Registry"
@@ -113,11 +139,14 @@ if (Test-Path $userStartup) {
         if ($folderMap.ContainsKey($_.Name.ToLower())) {
             $enabled = $folderMap[$_.Name.ToLower()]
         }
+        $iconCache = Get-IconCachePath $_.FullName
         $allApps += [PSCustomObject]@{
             Id = "Folder_$baseName"
             Name = $baseName
             Publisher = "Shortcut"
             Command = $_.FullName
+            ExecutablePath = $_.FullName
+            IconCachePath = $iconCache
             Location = "Startup Folder"
             LocationType = "StartupFolder"
             Type = "Shortcut"

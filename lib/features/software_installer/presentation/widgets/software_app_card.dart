@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/app_icon_widget.dart';
 import 'package:antidotes/features/software_installer/data/models/software_app_item.dart';
 import 'package:antidotes/features/software_installer/data/models/software_category.dart';
 
@@ -40,18 +41,14 @@ class SoftwareAppCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Brand Icon
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: app.brandColor.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: app.brandColor.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Icon(app.icon, color: app.brandColor, size: 24),
+              // Real Brand Icon
+              AppIconWidget(
+                name: app.name,
+                packageId: app.packageId,
+                fallbackIcon: app.icon,
+                brandColor: app.brandColor,
+                size: 44,
+                borderRadius: 12,
               ),
               const SizedBox(width: 12),
 

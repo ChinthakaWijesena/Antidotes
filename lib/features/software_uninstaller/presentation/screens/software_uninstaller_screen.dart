@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:antidotes/core/constants/app_colors.dart';
+import 'package:antidotes/core/widgets/app_icon_widget.dart';
 import 'package:antidotes/features/software_uninstaller/data/models/installed_app_item.dart';
 import 'package:antidotes/features/software_uninstaller/presentation/controllers/software_uninstaller_controller.dart';
 import 'package:antidotes/features/software_uninstaller/presentation/widgets/software_uninstall_wizard_dialog.dart';
@@ -388,18 +389,13 @@ class _SoftwareUninstallerScreenState extends State<SoftwareUninstallerScreen> {
                                   flex: 5,
                                   child: Row(
                                     children: [
-                                      Container(
-                                        width: 32,
-                                        height: 32,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.surfaceLight,
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Icon(
-                                          app.defaultIcon,
-                                          size: 18,
-                                          color: const Color(0xFFF57C00),
-                                        ),
+                                      AppIconWidget(
+                                        name: app.name,
+                                        iconPath: app.iconPath,
+                                        iconCachePath: app.iconCachePath,
+                                        fallbackIcon: app.defaultIcon,
+                                        size: 32,
+                                        borderRadius: 6,
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
