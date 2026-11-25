@@ -1,12 +1,12 @@
 {
-  "latest_version": "1.0.1",
+  "latest_version": "1.0.2",
   "release_date": "2026.11.25",
-  "download_url": "https://github.com/ChinthakaWijesena/Antidotes/releases/download/v1.0.1/Antidotes-Setup-v1.0.1.exe",
+  "download_url": "https://github.com/ChinthakaWijesena/Antidotes/releases/download/v1.0.2/Antidotes-Setup-v1.0.2.exe",
   "mandatory": false,
   "changelog": [
-    "Dedicated App Settings & Preferences screen",
-    "Refined cyan theme for In-App Auto-Updater",
-    "Enhanced Windows startup & system tray behavior",
-    "Bug fixes & optimization performance enhancements"
+    "Background Isolate multithreading for Junk Cleaner & Browser Cleaner (zero UI freeze)",
+    "Gentle disk I/O pacing so your PC stays fast and responsive during heavy cleanups",
+    "Dedicated App Settings & Preferences screen with cyan Auto-Updater UI",
+    "Fixed duplicate Windows CBS logs & case-insensitive TEMP path scanning"
   ]
 }
