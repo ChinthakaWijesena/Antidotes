@@ -2,7 +2,7 @@
 ; Official Flutter Windows installer script template
 
 #define MyAppName "Antidotes"
-#define MyAppVersion "1.0.4"
+#define MyAppVersion "1.0.5"
 #define MyAppPublisher "Antidotes"
 #define MyAppExeName "antidotes.exe"
 
@@ -26,7 +26,7 @@ WizardStyle=modern
 
 ; Elevation & Privileges (System Optimizer requires Administrator privileges)
 PrivilegesRequired=admin
-PrivilegesRequiredOverridesAllowed=dialog
+CloseApplications=force
 
 ; Architecture
 ArchitecturesAllowed=x64compatible
@@ -59,3 +59,23 @@ Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 [Run]
 ; Option to launch the application immediately after install (shellexec prevents CreateProcess 740 elevation error)
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: shellexec nowait postinstall skipifsilent
+
+[Code]
+// Force-close any running or System-Tray instances of Antidotes before replacing files
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode: Integer;
+begin
+  Exec('taskkill.exe', '/F /IM antidotes.exe /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(600);
+  Result := '';
+end;
+
+function InitializeUninstall(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Exec('taskkill.exe', '/F /IM antidotes.exe /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(500);
+  Result := True;
+end;

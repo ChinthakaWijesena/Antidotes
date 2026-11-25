@@ -1,12 +1,12 @@
 {
-  "latest_version": "1.0.4",
+  "latest_version": "1.0.5",
   "release_date": "2026.11.25",
-  "download_url": "https://github.com/ChinthakaWijesena/Antidotes/releases/download/v1.0.4/Antidotes-Setup-v1.0.4.exe",
+  "download_url": "https://github.com/ChinthakaWijesena/Antidotes/releases/download/v1.0.5/Antidotes-Setup-v1.0.5.exe",
   "mandatory": false,
   "changelog": [
+    "Installer now automatically closes running System Tray instances before updating (fixes DeleteFile code 5)",
     "DNS Manager: Automatic parallel latency benchmarking every 10 seconds",
     "DNS Manager: Added Ping Latency sorting (Low to High / High to Low)",
-    "Fixed Windows installer registry Access Denied (code 5) error on restricted PCs",
     "Background Isolate multithreading for Junk & Browser Cleaners (zero UI freeze)"
   ]
 }
