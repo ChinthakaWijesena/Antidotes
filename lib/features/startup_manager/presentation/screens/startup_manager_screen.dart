@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/system_restore_service.dart';
 import '../../../../core/theme/app_theme_scope.dart';
+import '../../../../core/widgets/app_icon_widget.dart';
 import '../../data/models/startup_app_item.dart';
 import '../controllers/startup_manager_controller.dart';
 
@@ -47,9 +48,8 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
         ),
         title: Row(
           children: [
-            Icon(Icons.info_outline_rounded,
-                color: AppColors.primary, size: 24),
-            const SizedBox(width: 10),
+            _buildAppIcon(item),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 item.name,
@@ -755,14 +755,14 @@ class _StartupManagerScreenState extends State<StartupManagerScreen> {
       iconColor = AppColors.accent;
     }
 
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: iconColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Icon(iconData, size: 16, color: iconColor),
+    return AppIconWidget(
+      name: item.name,
+      iconPath: item.executablePath,
+      iconCachePath: item.iconCachePath,
+      fallbackIcon: iconData,
+      brandColor: iconColor,
+      size: 28,
+      borderRadius: 6,
     );
   }
 }
