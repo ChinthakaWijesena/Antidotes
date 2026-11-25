@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import '../../../../core/services/win32_shell_service.dart';
@@ -34,10 +36,18 @@ class JunkCleanerService {
     final programData = env['ProgramData'] ?? 'C:\\ProgramData';
     final winDir = env['WINDIR'] ?? env['SYSTEMROOT'] ?? 'C:\\Windows';
 
-    final tempPaths = <String>{};
-    if (env['TEMP'] != null && env['TEMP']!.isNotEmpty) tempPaths.add(env['TEMP']!);
-    if (env['TMP'] != null && env['TMP']!.isNotEmpty) tempPaths.add(env['TMP']!);
-    if (localAppData.isNotEmpty) tempPaths.add(p.join(localAppData, 'Temp'));
+    final tempPathsMap = <String, String>{};
+    for (final candidate in [
+      env['TEMP'],
+      env['TMP'],
+      if (localAppData.isNotEmpty) p.join(localAppData, 'Temp'),
+    ]) {
+      if (candidate != null && candidate.isNotEmpty) {
+        final key = p.canonicalize(candidate).toLowerCase();
+        tempPathsMap.putIfAbsent(key, () => candidate);
+      }
+    }
+    final tempPaths = tempPathsMap.values;
 
     final firefoxProfiles = <String>[];
     if (localAppData.isNotEmpty) {
@@ -174,7 +184,6 @@ class JunkCleanerService {
         icon: Icons.description_outlined,
         paths: [
           p.join(winDir, 'Logs'),
-          p.join(winDir, 'Logs', 'CBS'),
         ],
         isCareful: true,
         isSelected: false,
@@ -182,7 +191,7 @@ class JunkCleanerService {
     ];
   }
 
-  /// Scans a single category considering all safety rules and pattern risks
+  /// Scans a single category in a background Isolate considering all safety rules and pattern risks.
   Future<void> scanCategory(
     JunkCategory category,
     CleanerSafetyOptions options, {
@@ -191,7 +200,7 @@ class JunkCleanerService {
     category.reset();
     category.isScanning = true;
 
-    // Handle Recycle Bin via Win32 API
+    // Handle Recycle Bin via Win32 API (offloaded to Isolate)
     if (category.isRecycleBin) {
       final rbInfo = await Win32ShellService.queryRecycleBin();
       if (rbInfo != null && rbInfo.totalItems > 0) {
@@ -211,96 +220,45 @@ class JunkCleanerService {
       return;
     }
 
-    final now = DateTime.now();
-    final recent24hThreshold = now.subtract(const Duration(hours: 24));
+    final receivePort = ReceivePort();
+    final completer = Completer<void>();
 
-    for (final dirPath in category.paths) {
-      final dir = Directory(dirPath);
-      if (!dir.existsSync()) continue;
+    try {
+      await Isolate.spawn(_scanCategoryIsolate, [
+        receivePort.sendPort,
+        category.paths,
+        category.type,
+        category.id,
+        options,
+        _patterns,
+      ]);
 
-      try {
-        await for (final entity in dir
-            .list(recursive: true, followLinks: false)
-            .handleError((_) {})) {
-          // Rule: NEVER follow symlinks or junction points!
-          if (entity is Link ||
-              FileSystemEntity.isLinkSync(entity.path) ||
-              entity is! File) {
-            continue;
-          }
-
-          final filePath = entity.path;
-          final fileName = p.basename(filePath);
-
-          // Rule: Exclude folders check
-          if (_isPathExcluded(filePath, options.excludeFolders)) {
-            continue;
-          }
-
-          // Rule: Exclude filename patterns check
-          if (_isFilenameExcluded(fileName, options.excludePatterns)) {
-            continue;
-          }
-
-          // Rule: Thumbnail cache directory special filter
-          if (category.type == JunkCategoryType.thumbnailCache) {
-            final lower = fileName.toLowerCase();
-            if (!lower.startsWith('thumbcache_') && !lower.startsWith('iconcache_')) {
-              continue;
-            }
-          }
-
-          try {
-            onProgress?.call(filePath);
-            final stat = await entity.stat();
-
-            // Rule: Ignore files created/modified within last 24 hours
-            if (options.ignoreRecent24Hours &&
-                stat.modified.isAfter(recent24hThreshold)) {
-              continue;
-            }
-
-            // Pattern & Risk verification
-            final risk = _evaluateRisk(fileName);
-
-            // Rule: *.log is default OFF
-            if (fileName.toLowerCase().endsWith('.log') && !options.includeLogs) {
-              continue;
-            }
-
-            // Rule: *.old and *.bak are default OFF
-            if ((fileName.toLowerCase().endsWith('.old') ||
-                    fileName.toLowerCase().endsWith('.bak')) &&
-                !options.includeBackups) {
-              continue;
-            }
-
-            final item = JunkItem(
-              path: filePath,
-              name: fileName,
-              sizeInBytes: stat.size,
-              categoryId: category.id,
-              risk: risk,
-              lastModified: stat.modified,
-              isSelected: true,
-            );
-
-            category.items.add(item);
-            category.totalBytes += stat.size;
-            category.fileCount += 1;
-          } catch (_) {
-            // File inaccessible / locked
+      receivePort.listen((message) {
+        if (message is Map<String, dynamic>) {
+          final kind = message['type'] as String?;
+          if (kind == 'progress') {
+            onProgress?.call(message['path'] as String);
+          } else if (kind == 'done') {
+            final items = message['items'] as List<JunkItem>;
+            final totalBytes = message['totalBytes'] as int;
+            category.items = items;
+            category.totalBytes = totalBytes;
+            category.fileCount = items.length;
+            receivePort.close();
+            if (!completer.isCompleted) completer.complete();
           }
         }
-      } catch (_) {
-        // Directory locked or permissions required
-      }
-    }
+      });
 
-    category.isScanning = false;
+      await completer.future;
+    } catch (_) {
+      receivePort.close();
+    } finally {
+      category.isScanning = false;
+    }
   }
 
-  /// Cleans selected categories with safe deletion and audit logging
+  /// Cleans selected categories in a background Isolate with safe deletion, I/O pacing, and audit logging.
   Future<CleanupResult> cleanCategories(
     List<JunkCategory> categories,
     CleanerSafetyOptions options, {
@@ -312,75 +270,294 @@ class JunkCleanerService {
     var filesFailed = 0;
     final logEntries = <DeletionLogEntry>[];
 
+    // 1. Handle Recycle Bin first (via Win32 background Isolate)
     for (final category in categories) {
-      if (!category.isSelected) continue;
+      if (!category.isSelected || !category.isRecycleBin) continue;
 
-      // Handle Recycle Bin
-      if (category.isRecycleBin) {
-        onProgress?.call('Emptying Windows Recycle Bin...', filesDeleted, bytesFreed);
-        final success = await Win32ShellService.emptyRecycleBin();
-        if (success) {
-          bytesFreed += category.totalBytes;
-          filesDeleted += category.fileCount;
-          logEntries.add(
-            DeletionLogEntry(
-              timestamp: DateTime.now(),
-              filePath: 'Recycle Bin',
-              sizeInBytes: category.totalBytes,
-              status: DeletionStatus.deleted,
-            ),
-          );
-          category.reset();
-          category.isCleaned = true;
-        } else {
-          filesFailed += category.fileCount;
-        }
-        continue;
+      onProgress?.call('Emptying Windows Recycle Bin...', filesDeleted, bytesFreed);
+      final success = await Win32ShellService.emptyRecycleBin();
+      if (success) {
+        bytesFreed += category.totalBytes;
+        filesDeleted += category.fileCount;
+        logEntries.add(
+          DeletionLogEntry(
+            timestamp: DateTime.now(),
+            filePath: 'Recycle Bin',
+            sizeInBytes: category.totalBytes,
+            status: DeletionStatus.deleted,
+          ),
+        );
+        category.reset();
+        category.isCleaned = true;
+      } else {
+        filesFailed += category.fileCount;
       }
+    }
 
-      final remainingItems = <JunkItem>[];
+    // 2. Gather selected items for file categories
+    final workList = <Map<String, dynamic>>[];
+    for (final category in categories) {
+      if (!category.isSelected || category.isRecycleBin) continue;
+      final selected = category.items.where((i) => i.isSelected).toList();
+      if (selected.isEmpty) continue;
+      workList.add({
+        'categoryId': category.id,
+        'items': selected,
+      });
+    }
 
-      for (final item in category.items) {
-        if (!item.isSelected) {
-          remainingItems.add(item);
+    if (workList.isNotEmpty) {
+      final receivePort = ReceivePort();
+      final completer = Completer<void>();
+
+      try {
+        await Isolate.spawn(_cleanCategoriesIsolate, [
+          receivePort.sendPort,
+          workList,
+          options.sendToRecycleBin,
+        ]);
+
+        receivePort.listen((message) {
+          if (message is Map<String, dynamic>) {
+            final kind = message['type'] as String?;
+            if (kind == 'progress') {
+              onProgress?.call(
+                message['path'] as String,
+                filesDeleted + (message['deleted'] as int),
+                bytesFreed + (message['freed'] as int),
+              );
+            } else if (kind == 'done') {
+              bytesFreed += message['bytesFreed'] as int;
+              filesDeleted += message['filesDeleted'] as int;
+              filesFailed += message['filesFailed'] as int;
+              logEntries.addAll(message['logEntries'] as List<DeletionLogEntry>);
+              final failedByCat =
+                  message['failedByCategory'] as Map<String, Set<String>>;
+
+              // Update category items on main Isolate
+              for (final category in categories) {
+                if (!category.isSelected || category.isRecycleBin) continue;
+                final failedPaths = failedByCat[category.id] ?? const <String>{};
+                final remaining = category.items
+                    .where((item) => !item.isSelected || failedPaths.contains(item.path))
+                    .toList();
+                category.items = remaining;
+                category.fileCount = remaining.length;
+                category.totalBytes =
+                    remaining.fold(0, (sum, i) => sum + i.sizeInBytes);
+                category.isCleaned = remaining.isEmpty;
+              }
+
+              receivePort.close();
+              if (!completer.isCompleted) completer.complete();
+            }
+          }
+        });
+
+        await completer.future;
+      } catch (_) {
+        receivePort.close();
+      }
+    } else {
+      // Mark empty selected file categories as cleaned
+      for (final category in categories) {
+        if (category.isSelected && !category.isRecycleBin) {
+          final remaining = category.items.where((i) => !i.isSelected).toList();
+          category.items = remaining;
+          category.fileCount = remaining.length;
+          category.totalBytes = remaining.fold(0, (sum, i) => sum + i.sizeInBytes);
+          category.isCleaned = remaining.isEmpty;
+        }
+      }
+    }
+
+    stopwatch.stop();
+    return CleanupResult(
+      bytesFreed: bytesFreed,
+      filesDeleted: filesDeleted,
+      filesFailed: filesFailed,
+      duration: stopwatch.elapsed,
+      logEntries: logEntries,
+    );
+  }
+}
+
+/// Top-level Isolate worker for scanning a category without blocking the UI or saturating disk I/O.
+Future<void> _scanCategoryIsolate(List<dynamic> args) async {
+  final sendPort = args[0] as SendPort;
+  final paths = args[1] as List<String>;
+  final type = args[2] as JunkCategoryType;
+  final categoryId = args[3] as String;
+  final options = args[4] as CleanerSafetyOptions;
+  final patterns = args[5] as List<JunkPattern>;
+
+  final items = <JunkItem>[];
+  var totalBytes = 0;
+  var processedCount = 0;
+
+  final now = DateTime.now();
+  final recent24hThreshold = now.subtract(const Duration(hours: 24));
+  final progressThrottle = Stopwatch()..start();
+
+  // Pre-compile exclude glob regexes once
+  final excludedRegexes = options.excludePatterns.map((pattern) {
+    final glob = pattern.replaceAll('*', '.*').replaceAll('?', '.');
+    return RegExp('^$glob\$', caseSensitive: false);
+  }).toList();
+  final excludedFoldersLower =
+      options.excludeFolders.map((f) => f.toLowerCase()).toList();
+
+  for (final dirPath in paths) {
+    final dir = Directory(dirPath);
+    if (!await dir.exists()) continue;
+
+    try {
+      await for (final entity in dir
+          .list(recursive: true, followLinks: false)
+          .handleError((_) {})) {
+        if (entity is! File) continue;
+
+        final filePath = entity.path;
+        final fileName = p.basename(filePath);
+        final lowerPath = filePath.toLowerCase();
+        final lowerName = fileName.toLowerCase();
+
+        // Exclude folders check
+        var excluded = false;
+        for (final folder in excludedFoldersLower) {
+          if (lowerPath.startsWith(folder)) {
+            excluded = true;
+            break;
+          }
+        }
+        if (excluded) continue;
+
+        // Exclude filename patterns check
+        for (final rx in excludedRegexes) {
+          if (rx.hasMatch(lowerName)) {
+            excluded = true;
+            break;
+          }
+        }
+        if (excluded) continue;
+
+        // Thumbnail cache special filter
+        if (type == JunkCategoryType.thumbnailCache &&
+            !lowerName.startsWith('thumbcache_') &&
+            !lowerName.startsWith('iconcache_')) {
           continue;
         }
 
-        onProgress?.call(item.path, filesDeleted, bytesFreed);
+        // *.log is default OFF
+        if (lowerName.endsWith('.log') && !options.includeLogs) continue;
+
+        // *.old and *.bak are default OFF
+        if ((lowerName.endsWith('.old') || lowerName.endsWith('.bak')) &&
+            !options.includeBackups) {
+          continue;
+        }
 
         try {
-          final file = File(item.path);
-          if (await file.exists()) {
-            if (options.sendToRecycleBin) {
-              // Move to Windows Recycle Bin via SHFileOperation
-              final ok = await Win32ShellService.moveToRecycleBin(item.path);
-              if (ok) {
-                bytesFreed += item.sizeInBytes;
-                filesDeleted += 1;
-                logEntries.add(
-                  DeletionLogEntry(
-                    timestamp: DateTime.now(),
-                    filePath: item.path,
-                    sizeInBytes: item.sizeInBytes,
-                    status: DeletionStatus.recycled,
-                  ),
-                );
-              } else {
-                // Fallback to permanent delete if moving to recycle bin fails
-                await file.delete();
-                bytesFreed += item.sizeInBytes;
-                filesDeleted += 1;
-                logEntries.add(
-                  DeletionLogEntry(
-                    timestamp: DateTime.now(),
-                    filePath: item.path,
-                    sizeInBytes: item.sizeInBytes,
-                    status: DeletionStatus.deleted,
-                  ),
-                );
-              }
+          if (progressThrottle.elapsedMilliseconds >= 100) {
+            progressThrottle.reset();
+            sendPort.send({'type': 'progress', 'path': filePath});
+          }
+
+          final stat = await entity.stat();
+
+          if (options.ignoreRecent24Hours &&
+              stat.modified.isAfter(recent24hThreshold)) {
+            continue;
+          }
+
+          var risk = PatternRisk.low;
+          for (final pattern in patterns) {
+            if (pattern.matches(fileName)) {
+              risk = pattern.risk;
+              break;
+            }
+          }
+
+          items.add(
+            JunkItem(
+              path: filePath,
+              name: fileName,
+              sizeInBytes: stat.size,
+              categoryId: categoryId,
+              risk: risk,
+              lastModified: stat.modified,
+              isSelected: true,
+            ),
+          );
+          totalBytes += stat.size;
+        } catch (_) {
+          // File inaccessible / locked
+        }
+
+        processedCount++;
+        // Gentle I/O pacing so laptop CPU & disk remain responsive
+        if (processedCount % 150 == 0) {
+          await Future.delayed(const Duration(milliseconds: 2));
+        }
+      }
+    } catch (_) {
+      // Directory locked or permissions required
+    }
+  }
+
+  sendPort.send({
+    'type': 'done',
+    'items': items,
+    'totalBytes': totalBytes,
+  });
+}
+
+/// Top-level Isolate worker for deleting junk files in the background with I/O pacing.
+Future<void> _cleanCategoriesIsolate(List<dynamic> args) async {
+  final sendPort = args[0] as SendPort;
+  final workList = args[1] as List<Map<String, dynamic>>;
+  final sendToRecycleBin = args[2] as bool;
+
+  var bytesFreed = 0;
+  var filesDeleted = 0;
+  var filesFailed = 0;
+  final logEntries = <DeletionLogEntry>[];
+  final failedByCategory = <String, Set<String>>{};
+  final progressThrottle = Stopwatch()..start();
+
+  for (final work in workList) {
+    final categoryId = work['categoryId'] as String;
+    final items = work['items'] as List<JunkItem>;
+    final failedPaths = <String>{};
+
+    for (final item in items) {
+      if (progressThrottle.elapsedMilliseconds >= 100) {
+        progressThrottle.reset();
+        sendPort.send({
+          'type': 'progress',
+          'path': item.path,
+          'deleted': filesDeleted,
+          'freed': bytesFreed,
+        });
+      }
+
+      try {
+        final file = File(item.path);
+        if (await file.exists()) {
+          if (sendToRecycleBin) {
+            final ok = Win32ShellService.moveToRecycleBinSync(item.path);
+            if (ok) {
+              bytesFreed += item.sizeInBytes;
+              filesDeleted += 1;
+              logEntries.add(
+                DeletionLogEntry(
+                  timestamp: DateTime.now(),
+                  filePath: item.path,
+                  sizeInBytes: item.sizeInBytes,
+                  status: DeletionStatus.recycled,
+                ),
+              );
             } else {
-              // Permanent delete
               await file.delete();
               bytesFreed += item.sizeInBytes;
               filesDeleted += 1;
@@ -393,65 +570,51 @@ class JunkCleanerService {
                 ),
               );
             }
+          } else {
+            await file.delete();
+            bytesFreed += item.sizeInBytes;
+            filesDeleted += 1;
+            logEntries.add(
+              DeletionLogEntry(
+                timestamp: DateTime.now(),
+                filePath: item.path,
+                sizeInBytes: item.sizeInBytes,
+                status: DeletionStatus.deleted,
+              ),
+            );
           }
-        } catch (e) {
-          filesFailed += 1;
-          remainingItems.add(item);
-          logEntries.add(
-            DeletionLogEntry(
-              timestamp: DateTime.now(),
-              filePath: item.path,
-              sizeInBytes: item.sizeInBytes,
-              status: DeletionStatus.skippedLocked,
-              errorMessage: e.toString(),
-            ),
-          );
         }
+      } catch (e) {
+        filesFailed += 1;
+        failedPaths.add(item.path);
+        logEntries.add(
+          DeletionLogEntry(
+            timestamp: DateTime.now(),
+            filePath: item.path,
+            sizeInBytes: item.sizeInBytes,
+            status: DeletionStatus.skippedLocked,
+            errorMessage: e.toString(),
+          ),
+        );
       }
 
-      category.items = remainingItems;
-      category.fileCount = remainingItems.length;
-      category.totalBytes = remainingItems.fold(0, (sum, i) => sum + i.sizeInBytes);
-      category.isCleaned = remainingItems.isEmpty;
-    }
-
-    stopwatch.stop();
-    return CleanupResult(
-      bytesFreed: bytesFreed,
-      filesDeleted: filesDeleted,
-      filesFailed: filesFailed,
-      duration: stopwatch.elapsed,
-      logEntries: logEntries,
-    );
-  }
-
-  PatternRisk _evaluateRisk(String filename) {
-    for (final pattern in _patterns) {
-      if (pattern.matches(filename)) {
-        return pattern.risk;
+      // Pace disk deletions every 100 files so Windows Explorer & Defender never saturate disk I/O
+      if ((filesDeleted + filesFailed) % 100 == 0) {
+        await Future.delayed(const Duration(milliseconds: 2));
       }
     }
-    return PatternRisk.low;
+
+    if (failedPaths.isNotEmpty) {
+      failedByCategory[categoryId] = failedPaths;
+    }
   }
 
-  bool _isPathExcluded(String filePath, List<String> excludedFolders) {
-    final lowerPath = filePath.toLowerCase();
-    for (final folder in excludedFolders) {
-      if (lowerPath.startsWith(folder.toLowerCase())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool _isFilenameExcluded(String filename, List<String> excludedPatterns) {
-    final lowerName = filename.toLowerCase();
-    for (final pattern in excludedPatterns) {
-      final glob = pattern.replaceAll('*', '.*').replaceAll('?', '.');
-      if (RegExp('^$glob\$', caseSensitive: false).hasMatch(lowerName)) {
-        return true;
-      }
-    }
-    return false;
-  }
+  sendPort.send({
+    'type': 'done',
+    'bytesFreed': bytesFreed,
+    'filesDeleted': filesDeleted,
+    'filesFailed': filesFailed,
+    'logEntries': logEntries,
+    'failedByCategory': failedByCategory,
+  });
 }

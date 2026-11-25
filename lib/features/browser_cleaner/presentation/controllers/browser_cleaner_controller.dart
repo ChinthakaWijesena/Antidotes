@@ -110,11 +110,15 @@ class BrowserCleanerController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final uiThrottle = Stopwatch()..start();
       _lastResult = await _service.cleanSelected(
         _browserGroups,
         onProgress: (path) {
           _currentProcessingPath = path;
-          notifyListeners();
+          if (uiThrottle.elapsedMilliseconds >= 100) {
+            uiThrottle.reset();
+            notifyListeners();
+          }
         },
       );
     } catch (_) {}

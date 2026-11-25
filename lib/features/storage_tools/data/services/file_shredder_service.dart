@@ -51,11 +51,16 @@ class FileShredderService {
         final raf = await file.open(mode: FileMode.writeOnly);
         try {
           int remaining = size;
+          int chunksWritten = 0;
           while (remaining > 0) {
             final chunk = min(remaining, _bufferSize);
             final buf   = _passBuffer(pass, algo, chunk, random);
             await raf.writeFrom(buf);
             remaining -= chunk;
+            chunksWritten++;
+            if (chunksWritten % 8 == 0) {
+              await Future.delayed(const Duration(milliseconds: 1));
+            }
           }
           await raf.flush();
         } finally {

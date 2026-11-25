@@ -2,6 +2,7 @@
 
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 
 // Win32 SHEmptyRecycleBin Flags
@@ -103,8 +104,13 @@ class Win32ShellService {
     }
   }
 
-  /// Queries the Recycle Bin for total size and items count on Windows.
+  /// Queries the Recycle Bin for total size and items count on Windows (offloaded to background Isolate).
   static Future<RecycleBinInfo?> queryRecycleBin() async {
+    if (!Platform.isWindows) return null;
+    return Isolate.run(_queryRecycleBinSync);
+  }
+
+  static RecycleBinInfo? _queryRecycleBinSync() {
     if (!Platform.isWindows) return null;
     _init();
     if (_shQueryRecycleBin == null) return null;
@@ -127,8 +133,13 @@ class Win32ShellService {
     return null;
   }
 
-  /// Empties the Windows Recycle Bin safely using shell32.dll.
+  /// Empties the Windows Recycle Bin safely using shell32.dll (offloaded to background Isolate).
   static Future<bool> emptyRecycleBin({bool showUi = false}) async {
+    if (!Platform.isWindows) return false;
+    return Isolate.run(() => _emptyRecycleBinSync(showUi: showUi));
+  }
+
+  static bool _emptyRecycleBinSync({bool showUi = false}) {
     if (!Platform.isWindows) return false;
     _init();
     if (_shEmptyRecycleBin == null) return false;
@@ -146,8 +157,14 @@ class Win32ShellService {
     }
   }
 
-  /// Moves a file to the Windows Recycle Bin instead of permanent deletion.
+  /// Moves a file to the Windows Recycle Bin instead of permanent deletion (offloaded to background Isolate).
   static Future<bool> moveToRecycleBin(String filePath) async {
+    if (!Platform.isWindows) return false;
+    return Isolate.run(() => moveToRecycleBinSync(filePath));
+  }
+
+  /// Synchronous FFI version intended for use inside background worker Isolates.
+  static bool moveToRecycleBinSync(String filePath) {
     if (!Platform.isWindows) return false;
     _init();
     if (_shFileOperation == null) return false;

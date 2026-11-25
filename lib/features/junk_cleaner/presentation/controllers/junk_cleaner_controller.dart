@@ -106,14 +106,19 @@ class JunkCleanerController extends ChangeNotifier {
     }
 
     for (final category in _categories) {
+      final uiThrottle = Stopwatch()..start();
       await _service.scanCategory(
         category,
         _safetyOptions,
         onProgress: (path) {
           _currentProcessingPath = path;
-          notifyListeners();
+          if (uiThrottle.elapsedMilliseconds >= 100) {
+            uiThrottle.reset();
+            notifyListeners();
+          }
         },
       );
+      notifyListeners();
     }
 
     _state = CleanerState.scanCompleted;
@@ -128,12 +133,16 @@ class JunkCleanerController extends ChangeNotifier {
     _currentProcessingPath = 'Starting cleanup process...';
     notifyListeners();
 
+    final uiThrottle = Stopwatch()..start();
     _lastCleanupResult = await _service.cleanCategories(
       _categories,
       _safetyOptions,
       onProgress: (currentFile, filesDeleted, bytesFreed) {
         _currentProcessingPath = currentFile;
-        notifyListeners();
+        if (uiThrottle.elapsedMilliseconds >= 100) {
+          uiThrottle.reset();
+          notifyListeners();
+        }
       },
     );
 

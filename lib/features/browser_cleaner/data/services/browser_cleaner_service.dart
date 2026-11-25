@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:path/path.dart' as p;
 import '../models/browser_clean_item.dart';
 import '../models/browser_profile_group.dart';
@@ -155,80 +157,111 @@ class BrowserCleanerService {
 
   Future<({int size, int count, List<String> files})> _calculatePathStats(
       String fullPath) async {
-    int size = 0;
-    int count = 0;
-    final files = <String>[];
+    return Isolate.run(() async {
+      int size = 0;
+      int count = 0;
+      final files = <String>[];
 
-    final type = await FileSystemEntity.type(fullPath, followLinks: false);
-    if (type == FileSystemEntityType.file) {
-      try {
-        final f = File(fullPath);
-        final len = await f.length();
-        size += len;
-        count++;
-        files.add(fullPath);
-      } catch (_) {}
-    } else if (type == FileSystemEntityType.directory) {
-      final dir = Directory(fullPath);
-      try {
-        await for (final entity
-            in dir.list(recursive: true, followLinks: false)) {
-          if (entity is File) {
-            try {
-              final len = await entity.length();
-              size += len;
-              count++;
-              files.add(entity.path);
-            } catch (_) {}
+      final type = await FileSystemEntity.type(fullPath, followLinks: false);
+      if (type == FileSystemEntityType.file) {
+        try {
+          final f = File(fullPath);
+          final len = await f.length();
+          size += len;
+          count++;
+          files.add(fullPath);
+        } catch (_) {}
+      } else if (type == FileSystemEntityType.directory) {
+        final dir = Directory(fullPath);
+        try {
+          await for (final entity
+              in dir.list(recursive: true, followLinks: false)) {
+            if (entity is File) {
+              try {
+                final len = await entity.length();
+                size += len;
+                count++;
+                files.add(entity.path);
+              } catch (_) {}
+              if (count % 200 == 0) {
+                await Future.delayed(const Duration(milliseconds: 2));
+              }
+            }
           }
-        }
-      } catch (_) {}
-    }
+        } catch (_) {}
+      }
 
-    return (size: size, count: count, files: files);
+      return (size: size, count: count, files: files);
+    });
   }
 
-  /// Cleans the selected items across all specified browser groups safely
+  /// Cleans the selected items across all specified browser groups in a background Isolate.
   Future<BrowserCleanResult> cleanSelected(
     List<BrowserProfileGroup> groups, {
     void Function(String currentPath)? onProgress,
   }) async {
-    int totalFilesDeleted = 0;
-    int totalBytesFreed = 0;
-    int skippedLocked = 0;
     final cleanedBrowsers = <String>{};
+    final filesToDelete = <String>[];
 
     for (final group in groups) {
       for (final item in group.items) {
         if (!item.isSelected || item.detectedFiles.isEmpty) continue;
-
         cleanedBrowsers.add(group.name);
-
-        for (final filePath in item.detectedFiles) {
-          onProgress?.call(filePath);
-
-          try {
-            final f = File(filePath);
-            if (await f.exists()) {
-              final len = await f.length();
-              await f.delete();
-              totalBytesFreed += len;
-              totalFilesDeleted++;
-            }
-          } catch (_) {
-            // Locked by running browser or Windows permission
-            skippedLocked++;
-          }
-        }
+        filesToDelete.addAll(item.detectedFiles);
       }
     }
 
-    return BrowserCleanResult(
-      totalFilesDeleted: totalFilesDeleted,
-      totalBytesFreed: totalBytesFreed,
-      skippedLockedFiles: skippedLocked,
-      cleanedBrowserNames: cleanedBrowsers.toList(),
-    );
+    if (filesToDelete.isEmpty) {
+      return const BrowserCleanResult(
+        totalFilesDeleted: 0,
+        totalBytesFreed: 0,
+        skippedLockedFiles: 0,
+        cleanedBrowserNames: [],
+      );
+    }
+
+    final receivePort = ReceivePort();
+    final completer = Completer<({int deleted, int freed, int skipped})>();
+
+    try {
+      await Isolate.spawn(_cleanBrowserFilesIsolate, [
+        receivePort.sendPort,
+        filesToDelete,
+      ]);
+
+      receivePort.listen((message) {
+        if (message is Map<String, dynamic>) {
+          final kind = message['type'] as String?;
+          if (kind == 'progress') {
+            onProgress?.call(message['path'] as String);
+          } else if (kind == 'done') {
+            final res = (
+              deleted: message['deleted'] as int,
+              freed: message['freed'] as int,
+              skipped: message['skipped'] as int,
+            );
+            receivePort.close();
+            if (!completer.isCompleted) completer.complete(res);
+          }
+        }
+      });
+
+      final res = await completer.future;
+      return BrowserCleanResult(
+        totalFilesDeleted: res.deleted,
+        totalBytesFreed: res.freed,
+        skippedLockedFiles: res.skipped,
+        cleanedBrowserNames: cleanedBrowsers.toList(),
+      );
+    } catch (_) {
+      receivePort.close();
+      return BrowserCleanResult(
+        totalFilesDeleted: 0,
+        totalBytesFreed: 0,
+        skippedLockedFiles: filesToDelete.length,
+        cleanedBrowserNames: cleanedBrowsers.toList(),
+      );
+    }
   }
 
   // --- Browser Profile Definitions ---
@@ -614,4 +647,45 @@ class BrowserCleanerService {
       ],
     );
   }
+}
+
+/// Top-level Isolate worker for deleting browser cache/history files with I/O pacing.
+Future<void> _cleanBrowserFilesIsolate(List<dynamic> args) async {
+  final sendPort = args[0] as SendPort;
+  final filesToDelete = args[1] as List<String>;
+
+  var deleted = 0;
+  var freed = 0;
+  var skipped = 0;
+  final progressThrottle = Stopwatch()..start();
+
+  for (final filePath in filesToDelete) {
+    if (progressThrottle.elapsedMilliseconds >= 100) {
+      progressThrottle.reset();
+      sendPort.send({'type': 'progress', 'path': filePath});
+    }
+
+    try {
+      final f = File(filePath);
+      if (await f.exists()) {
+        final len = await f.length();
+        await f.delete();
+        freed += len;
+        deleted++;
+      }
+    } catch (_) {
+      skipped++;
+    }
+
+    if ((deleted + skipped) % 100 == 0) {
+      await Future.delayed(const Duration(milliseconds: 2));
+    }
+  }
+
+  sendPort.send({
+    'type': 'done',
+    'deleted': deleted,
+    'freed': freed,
+    'skipped': skipped,
+  });
 }
