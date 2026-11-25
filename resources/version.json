@@ -1,0 +1,12 @@
+{
+  "latest_version": "1.0.0",
+  "release_date": "2026.11.25",
+  "download_url": "https://antidotes-df58c.web.app/downloads/Antidotes-Setup-v1.0.0.exe",
+  "mandatory": false,
+  "changelog": [
+    "Integrated modern In-App Auto-Updater system",
+    "Optimized RAM Optimizer performance and cache purge engine",
+    "Enhanced responsive layouts for half-screen and tablet views",
+    "Fixed startup impact detection and table column alignment"
+  ]
+}

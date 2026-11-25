@@ -5,9 +5,9 @@ import 'package:antidotes/features/navigation/presentation/widgets/app_sidebar.d
 
 void main() {
   group('Navigation Models & Hierarchy Tests', () {
-    test('Default topics contains 5 structured categories with 14 subtopics', () {
+    test('Default topics contains 6 structured categories with 15 subtopics', () {
       final topics = NavTopic.defaultTopics;
-      expect(topics.length, 5);
+      expect(topics.length, 6);
 
       expect(topics[0].id, 'optimization');
       expect(topics[0].title, 'OPTIMIZATION');
@@ -33,16 +33,21 @@ void main() {
       expect(topics[4].title, 'STORAGE & FILES');
       expect(topics[4].items.length, 3);
       expect(topics[4].items.map((i) => i.index), [10, 11, 12]);
+
+      expect(topics[5].id, 'settings');
+      expect(topics[5].title, 'SETTINGS');
+      expect(topics[5].items.length, 1);
+      expect(topics[5].items.map((i) => i.index), [14]);
     });
 
-    test('All 14 subtopic indices are uniquely covered', () {
+    test('All 15 subtopic indices are uniquely covered', () {
       final allIndices = NavTopic.defaultTopics
           .expand((topic) => topic.items.map((item) => item.index))
           .toList();
 
-      expect(allIndices.length, 14);
-      expect(allIndices.toSet().length, 14);
-      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+      expect(allIndices.length, 15);
+      expect(allIndices.toSet().length, 15);
+      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
     });
 
     test('NavTopic.forIndex resolves parent topic correctly for each subtopic', () {

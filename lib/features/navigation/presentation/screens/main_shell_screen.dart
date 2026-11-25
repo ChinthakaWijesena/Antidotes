@@ -17,6 +17,9 @@ import 'package:antidotes/features/storage_tools/presentation/screens/file_shred
 import 'package:antidotes/features/disk_health/presentation/screens/disk_health_screen.dart';
 import 'package:antidotes/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:antidotes/features/profile/presentation/controllers/profile_controller.dart';
+import 'package:antidotes/features/app_settings/presentation/screens/app_settings_screen.dart';
+import 'package:antidotes/features/auto_updater/presentation/controllers/auto_updater_controller.dart';
+import 'package:antidotes/features/auto_updater/presentation/widgets/update_available_dialog.dart';
 import '../widgets/app_sidebar.dart';
 
 class MainShellScreen extends StatefulWidget {
@@ -36,6 +39,37 @@ class MainShellScreen extends StatefulWidget {
 class _MainShellScreenState extends State<MainShellScreen> {
   int _selectedNavIndex = 0;
   bool? _manuallyCollapsed;
+  late final AutoUpdaterController _updaterController;
+
+  @override
+  void initState() {
+    super.initState();
+    _updaterController = AutoUpdaterController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAutoUpdate();
+    });
+  }
+
+  @override
+  void dispose() {
+    _updaterController.dispose();
+    super.dispose();
+  }
+
+  void _checkAutoUpdate() {
+    // Wait 3 seconds after startup so UI renders smoothly before checking
+    Future.delayed(const Duration(seconds: 3), () async {
+      if (!mounted) return;
+      final hasUpdate = await _updaterController.checkForUpdates(silent: true);
+      if (hasUpdate && mounted && _updaterController.updateInfo != null) {
+        UpdateAvailableDialog.show(
+          context,
+          _updaterController.updateInfo!,
+          _updaterController,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +162,11 @@ class _MainShellScreenState extends State<MainShellScreen> {
                     DiskHealthScreen(
                       key: ValueKey(
                           'disk_health_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                    ),
+                    AppSettingsScreen(
+                      key: ValueKey(
+                          'app_settings_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
+                      updaterController: _updaterController,
                     ),
                   ],
                 ),

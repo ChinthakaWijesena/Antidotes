@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:antidotes/core/constants/app_colors.dart';
 import 'package:antidotes/features/windows_settings/presentation/controllers/windows_settings_controller.dart';
-import 'package:antidotes/features/windows_settings/presentation/widgets/app_behavior_card.dart';
 import 'package:antidotes/features/windows_settings/presentation/widgets/env_variables_card.dart';
 import 'package:antidotes/features/windows_settings/presentation/widgets/performance_options_card.dart';
 import 'package:antidotes/features/windows_settings/presentation/widgets/power_modes_card.dart';
@@ -55,13 +54,6 @@ class _WindowsSettingsScreenState extends State<WindowsSettingsScreen> {
                   // Screen Header
                   _buildHeader(),
                   const SizedBox(height: 18),
-
-                  // 0. Antidotes Startup & System Tray Behavior Card
-                  AppBehaviorCard(
-                    isStartupEnabled: _controller.isStartupEnabled,
-                    onStartupChanged: _controller.toggleStartup,
-                  ),
-                  const SizedBox(height: 16),
 
                   // 1. Dark Mode / Light Mode Switch
                   ThemeModeCard(

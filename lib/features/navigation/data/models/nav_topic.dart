@@ -128,6 +128,18 @@ class NavTopic {
         ),
       ],
     ),
+    NavTopic(
+      id: 'settings',
+      title: 'SETTINGS',
+      icon: Icons.settings_rounded,
+      items: [
+        NavItem(
+          index: 14,
+          label: 'App Settings',
+          icon: Icons.settings_rounded,
+        ),
+      ],
+    ),
   ];
 
   /// Finds which topic owns a particular item index
