@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/file_size_formatter.dart';
-import '../../../../core/widgets/app_icon_widget.dart';
 import '../../data/models/browser_clean_item.dart';
 import '../../data/models/browser_profile_group.dart';
 import '../../data/models/browser_type.dart';
@@ -79,13 +78,22 @@ class _BrowserCardState extends State<BrowserCard> {
                   ),
                   const SizedBox(width: 8),
 
-                  // Real Browser Brand Icon
-                  AppIconWidget(
-                    name: group.type.displayName,
-                    fallbackIcon: _getBrowserIcon(group.type),
-                    brandColor: brandColor,
-                    size: 38,
-                    borderRadius: 10,
+                  // Browser Brand Icon
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: brandColor.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: brandColor.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Icon(
+                      _getBrowserIcon(group.type),
+                      color: brandColor,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 14),
 

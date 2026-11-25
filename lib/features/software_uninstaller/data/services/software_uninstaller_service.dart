@@ -12,6 +12,80 @@ if (-not (Test-Path $cacheDir)) {
 }
 Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
 
+$shortcutMap = @{}
+$smPaths = @(
+    "$env:ProgramData\Microsoft\Windows\Start Menu\Programs",
+    "$env:APPDATA\Microsoft\Windows\Start Menu\Programs"
+)
+foreach ($sm in $smPaths) {
+    if (Test-Path $sm) {
+        Get-ChildItem -Path $sm -Recurse -Filter *.lnk -ErrorAction SilentlyContinue | ForEach-Object {
+            $shortcutMap[$_.BaseName.ToLower().Trim()] = $_.FullName
+        }
+    }
+}
+
+$msiExe = "$env:SystemRoot\System32\msiexec.exe"
+
+function Resolve-AppIconPath($p) {
+    $target = ""
+    # 1. DisplayIcon
+    if ($p.DisplayIcon) {
+        $raw = $p.DisplayIcon.Trim('"', ' ').Split(',')[0].Trim()
+        if (Test-Path $raw) {
+            $fn = [System.IO.Path]::GetFileName($raw).ToLower()
+            if ($fn -like '*unins*' -or $fn -like '*setup*') {
+                $dir = [System.IO.Path]::GetDirectoryName($raw)
+                $main = Get-ChildItem -Path $dir -Filter *.exe -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike '*unins*' -and $_.Name -notlike '*setup*' } | Select-Object -First 1
+                if ($main) { $target = $main.FullName } else { $target = $raw }
+            } else {
+                $target = $raw
+            }
+        }
+    }
+    # 2. Start Menu Shortcuts
+    if (-not $target -and $p.DisplayName) {
+        $nameLower = $p.DisplayName.ToLower().Trim()
+        foreach ($k in $script:shortcutMap.Keys) {
+            if ($nameLower.Contains($k) -or $k.Contains($nameLower)) {
+                $target = $script:shortcutMap[$k]
+                break
+            }
+        }
+    }
+    # 3. InstallLocation
+    if (-not $target -and $p.InstallLocation) {
+        $loc = $p.InstallLocation.Trim('"', ' ')
+        if (Test-Path $loc) {
+            $exes = Get-ChildItem -Path $loc -Filter *.exe -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike '*unins*' }
+            $first = $exes | Select-Object -First 1
+            if ($first) { $target = $first.FullName }
+        }
+    }
+    # 4. UninstallString
+    if (-not $target -and $p.UninstallString) {
+        $u = $p.UninstallString.Trim()
+        $candidate = ""
+        if ($u.StartsWith('"')) {
+            $idx = $u.IndexOf('"', 1)
+            if ($idx -gt 1) { $candidate = $u.Substring(1, $idx - 1) }
+        } else {
+            $sp = $u.IndexOf(' ')
+            $candidate = if ($sp -gt 0) { $u.Substring(0, $sp) } else { $u }
+        }
+        if ($candidate -and (Test-Path $candidate)) {
+            $dir = [System.IO.Path]::GetDirectoryName($candidate)
+            $main = Get-ChildItem -Path $dir -Filter *.exe -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike '*unins*' } | Select-Object -First 1
+            if ($main) { $target = $main.FullName } else { $target = $candidate }
+        }
+    }
+    # 5. MSI Installer Package fallback
+    if (-not $target -and ($p.WindowsInstaller -eq 1 -or $p.PSChildName -like '{*-*-*}')) {
+        if (Test-Path $script:msiExe) { $target = $script:msiExe }
+    }
+    return $target
+}
+
 $paths = @(
     "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall",
     "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
@@ -24,8 +98,9 @@ $seen = @{}
 foreach ($base in $paths) {
     if (Test-Path $base) {
         Get-ChildItem -Path $base -ErrorAction SilentlyContinue | ForEach-Object {
-            $prop = Get-ItemProperty -Path $_.PsPath -ErrorAction SilentlyContinue
-            if ($prop.DisplayName -and $prop.UninstallString -and (-not $prop.SystemComponent -or $prop.SystemComponent -eq 0)) {
+            $prop = $null
+            try { $prop = Get-ItemProperty -Path $_.PsPath -ErrorAction Stop } catch {}
+            if ($prop -and $prop.DisplayName -and $prop.UninstallString -and (-not $prop.SystemComponent -or $prop.SystemComponent -eq 0)) {
                 $name = $prop.DisplayName.Trim()
                 $key = $name.ToLower()
                 if (-not $seen.ContainsKey($key)) {
@@ -37,17 +112,7 @@ foreach ($base in $paths) {
                     $is64 = ($_.PsPath -notmatch 'Wow6432Node')
 
                     $iconCache = ""
-                    $targetIcon = ""
-                    if ($prop.DisplayIcon) {
-                        $targetIcon = $prop.DisplayIcon.Trim('"', ' ').Split(',')[0].Trim()
-                    }
-                    if ((-not $targetIcon -or -not (Test-Path $targetIcon)) -and $prop.InstallLocation) {
-                        $loc = $prop.InstallLocation.Trim('"', ' ')
-                        if (Test-Path $loc) {
-                            $firstExe = Get-ChildItem -Path $loc -Filter *.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-                            if ($firstExe) { $targetIcon = $firstExe.FullName }
-                        }
-                    }
+                    $targetIcon = Resolve-AppIconPath $prop
                     if ($targetIcon -and (Test-Path $targetIcon)) {
                         $hash = [Math]::Abs($targetIcon.ToLower().GetHashCode())
                         $outPng = "$cacheDir\$hash.png"
