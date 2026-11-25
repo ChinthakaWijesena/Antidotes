@@ -28,6 +28,6 @@ void main() {
     expect(find.text('Settings & Preferences'), findsOneWidget);
     expect(find.text('Antidotes Updates'), findsOneWidget);
     expect(find.text('Antidotes PC Optimizer'), findsOneWidget);
-    expect(find.text('v1.0.6'), findsWidgets);
+    expect(find.text('v1.0.7'), findsWidgets);
   });
 }

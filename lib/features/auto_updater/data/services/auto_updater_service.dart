@@ -14,7 +14,7 @@ class AutoUpdaterService {
   final String currentAppVersion;
 
   static const String defaultManifestUrl = 'https://antidotes-df58c.web.app/version.json';
-  static const String defaultAppVersion = '1.0.6';
+  static const String defaultAppVersion = '1.0.7';
 
   final HttpClient _client;
 

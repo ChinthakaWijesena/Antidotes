@@ -1,13 +1,12 @@
 {
-  "latest_version": "1.0.6",
+  "latest_version": "1.0.7",
   "release_date": "2026.11.26",
-  "download_url": "https://github.com/ChinthakaWijesena/Antidotes/releases/download/v1.0.6/Antidotes-Setup-v1.0.6.exe",
+  "download_url": "https://github.com/ChinthakaWijesena/Antidotes/releases/download/v1.0.7/Antidotes-Setup-v1.0.7.exe",
   "mandatory": false,
   "changelog": [
-    "Display real authentic application icons (Spotify, Chrome, Firefox, Edge, Brave, Discord, VS Code, VLC, etc.)",
-    "Windows Native Icon Extraction: dynamically extracts original .exe and DisplayIcon icons for all installed software",
-    "Startup Optimizer: Authentic icons for every startup application",
-    "Software Uninstaller & Wizard: Displays real app icon during scan and uninstallation",
-    "Software Installer & Browser Cleaner: High-fidelity brand logos for all catalog apps and browsers"
+    "Genuine Windows application icons across both Software Uninstaller and Startup Optimizer",
+    "Dynamic executable and Start Menu shortcut icon extraction for all desktop software",
+    "Resolved real app icons in Startup Apps table and properties dialog (Spotify, Discord, Steam, IDM, Chrome, Edge, etc.)",
+    "Clean standard Material fallback icons for non-installed catalog tools"
   ]
 }

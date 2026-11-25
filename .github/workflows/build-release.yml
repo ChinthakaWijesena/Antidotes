@@ -80,20 +80,8 @@ jobs:
 
       - name: Attach Installer to GitHub Release (on Tag Push)
         if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Continue'
-          $tag = "${{ github.ref_name }}"
-          $file = (Get-ChildItem "build\installer\Antidotes-Setup-*.exe" | Select-Object -First 1).FullName
-          if (-not $file) {
-            Write-Error "Installer file not found!"
-            exit 1
-          }
-          gh release view $tag *> $null
-          if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag "$file" --clobber
-          } else {
-            gh release create $tag "$file" --title "Antidotes $tag" --generate-notes
-          }
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/installer/Antidotes-Setup-*.exe
+          name: Antidotes ${{ github.ref_name }}
+          generate_release_notes: true
