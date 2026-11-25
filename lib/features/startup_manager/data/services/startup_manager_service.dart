@@ -19,6 +19,22 @@ Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
 
 $allApps = @()
 
+$shortcutMap = @{}
+$smPaths = @(
+    "$env:ProgramData\Microsoft\Windows\Start Menu\Programs",
+    "$env:APPDATA\Microsoft\Windows\Start Menu\Programs"
+)
+foreach ($sm in $smPaths) {
+    if (Test-Path $sm) {
+        Get-ChildItem -Path $sm -Recurse -Filter *.lnk -ErrorAction SilentlyContinue | ForEach-Object {
+            $base = $_.BaseName.ToLower().Trim()
+            if (-not $shortcutMap.ContainsKey($base)) {
+                $shortcutMap[$base] = $_.FullName
+            }
+        }
+    }
+}
+
 $hkcuRunAppr = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
 $hklmRunAppr = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
 $hklmRun32Appr = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32"
@@ -39,6 +55,30 @@ function Get-IconCachePath($targetPath) {
         } catch {}
     }
     return ""
+}
+
+function Resolve-StartupIcon($name, $exe) {
+    $target = ""
+    if ($exe -and (Test-Path $exe)) {
+        $fn = [System.IO.Path]::GetFileName($exe).ToLower()
+        $dir = [System.IO.Path]::GetDirectoryName($exe)
+        if ($fn -like '*update*.exe' -or $fn -eq 'launcher.exe') {
+            $main = Get-ChildItem -Path $dir -Recurse -Filter *.exe -Depth 2 -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike '*update*' -and $_.Name -notlike '*setup*' } | Select-Object -First 1
+            if ($main) { $target = $main.FullName } else { $target = $exe }
+        } else {
+            $target = $exe
+        }
+    }
+    if (-not $target -or -not (Test-Path $target)) {
+        $n = $name.ToLower().Trim()
+        foreach ($k in $script:shortcutMap.Keys) {
+            if ($n.Contains($k) -or $k.Contains($n)) {
+                $target = $script:shortcutMap[$k]
+                break
+            }
+        }
+    }
+    return (Get-IconCachePath $target)
 }
 
 function Get-ApprovedMap($path) {
@@ -75,6 +115,10 @@ function Extract-Exe($cmd) {
         $idx = $c.IndexOf('"', 1)
         if ($idx -gt 1) { return $c.Substring(1, $idx - 1) }
     }
+    $exeIdx = $c.IndexOf('.exe', [System.StringComparison]::OrdinalIgnoreCase)
+    if ($exeIdx -gt 0) {
+        return $c.Substring(0, $exeIdx + 4)
+    }
     $sp = $c.IndexOf(' ')
     if ($sp -gt 0) { return $c.Substring(0, $sp) }
     return $c
@@ -106,7 +150,7 @@ function Read-RegRun($regPath, $locName, $map, $locType) {
                     elseif ($l -like '*idm*' -or $l -like '*internet download*') { $pub = "Tonec Inc." }
                     else { $pub = "Unknown" }
                 }
-                $iconCache = Get-IconCachePath $exe
+                $iconCache = Resolve-StartupIcon $name $exe
                 $items += [PSCustomObject]@{
                     Id = "$locType`_$name"
                     Name = $name
@@ -182,11 +226,36 @@ try {
                         $pubName = $manifest.Package.Properties.PublisherDisplayName
                         if (-not $pubName) { $pubName = "Microsoft Corporation" }
 
+                        $uwpIcon = ""
+                        if ($manifest.Package.Applications.Application.VisualElements -and $_.InstallLocation) {
+                            $ve = @($manifest.Package.Applications.Application.VisualElements)[0]
+                            $logoRel = $ve.Square44x44Logo
+                            if (-not $logoRel) { $logoRel = $ve.Square150x150Logo }
+                            if ($logoRel) {
+                                $logoPath = Join-Path $_.InstallLocation $logoRel
+                                if (Test-Path $logoPath) {
+                                    $uwpIcon = $logoPath
+                                } else {
+                                    $logoDir = [System.IO.Path]::GetDirectoryName($logoPath)
+                                    $logoBase = [System.IO.Path]::GetFileNameWithoutExtension($logoPath)
+                                    if (Test-Path $logoDir) {
+                                        $found = Get-ChildItem -Path $logoDir -Filter "$logoBase*.png" -ErrorAction SilentlyContinue | Select-Object -First 1
+                                        if ($found) { $uwpIcon = $found.FullName }
+                                    }
+                                }
+                            }
+                        }
+                        if (-not $uwpIcon) {
+                            $uwpIcon = Resolve-StartupIcon $appDisplayName ""
+                        }
+
                         $allApps += [PSCustomObject]@{
                             Id = "UWP_$pfn`_$tId"
                             Name = $appDisplayName
                             Publisher = $pubName
                             Command = "$pfn ($tId)"
+                            ExecutablePath = ""
+                            IconCachePath = $uwpIcon
                             Location = "Windows App Package"
                             LocationType = "UWP"
                             Type = "UWP"
