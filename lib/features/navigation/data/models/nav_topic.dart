@@ -41,6 +41,11 @@ class NavTopic {
           index: 9,
           label: 'RAM Optimizer',
           icon: Icons.memory_rounded,
+        ),
+        NavItem(
+          index: 15,
+          label: 'Game Booster',
+          icon: Icons.sports_esports_rounded,
           badgeText: 'NEW',
         ),
       ],

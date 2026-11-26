@@ -18,6 +18,7 @@ import 'package:antidotes/features/disk_health/presentation/screens/disk_health_
 import 'package:antidotes/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:antidotes/features/profile/presentation/controllers/profile_controller.dart';
 import 'package:antidotes/features/app_settings/presentation/screens/app_settings_screen.dart';
+import 'package:antidotes/features/game_booster/presentation/screens/game_booster_screen.dart';
 import 'package:antidotes/features/auto_updater/presentation/controllers/auto_updater_controller.dart';
 import 'package:antidotes/features/auto_updater/presentation/widgets/update_available_dialog.dart';
 import '../widgets/app_sidebar.dart';
@@ -167,6 +168,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
                       key: ValueKey(
                           'app_settings_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
                       updaterController: _updaterController,
+                    ),
+                    GameBoosterScreen(
+                      key: ValueKey(
+                          'game_booster_${theme.isDarkMode}_${theme.accentColor.toARGB32()}'),
                     ),
                   ],
                 ),

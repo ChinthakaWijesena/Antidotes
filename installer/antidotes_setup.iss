@@ -2,7 +2,7 @@
 ; Official Flutter Windows installer script template
 
 #define MyAppName "Antidotes"
-#define MyAppVersion "1.0.7"
+#define MyAppVersion "1.0.8"
 #define MyAppPublisher "Antidotes"
 #define MyAppExeName "antidotes.exe"
 

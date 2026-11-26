@@ -5,14 +5,14 @@ import 'package:antidotes/features/navigation/presentation/widgets/app_sidebar.d
 
 void main() {
   group('Navigation Models & Hierarchy Tests', () {
-    test('Default topics contains 6 structured categories with 15 subtopics', () {
+    test('Default topics contains 6 structured categories with 16 subtopics', () {
       final topics = NavTopic.defaultTopics;
       expect(topics.length, 6);
 
       expect(topics[0].id, 'optimization');
       expect(topics[0].title, 'OPTIMIZATION');
-      expect(topics[0].items.length, 4); // Junk Cleaner, Startup Optimizer, Browser Cleaner, RAM Optimizer
-      expect(topics[0].items.map((i) => i.index), [0, 1, 2, 9]);
+      expect(topics[0].items.length, 5); // Junk Cleaner, Startup Optimizer, Browser Cleaner, RAM Optimizer, Game Booster
+      expect(topics[0].items.map((i) => i.index), [0, 1, 2, 9, 15]);
 
       expect(topics[1].id, 'system_hardware');
       expect(topics[1].title, 'SYSTEM & HARDWARE');
@@ -40,14 +40,14 @@ void main() {
       expect(topics[5].items.map((i) => i.index), [14]);
     });
 
-    test('All 15 subtopic indices are uniquely covered', () {
+    test('All 16 subtopic indices are uniquely covered', () {
       final allIndices = NavTopic.defaultTopics
           .expand((topic) => topic.items.map((item) => item.index))
           .toList();
 
-      expect(allIndices.length, 15);
-      expect(allIndices.toSet().length, 15);
-      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+      expect(allIndices.length, 16);
+      expect(allIndices.toSet().length, 16);
+      expect(allIndices..sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
     });
 
     test('NavTopic.forIndex resolves parent topic correctly for each subtopic', () {
@@ -55,6 +55,7 @@ void main() {
       expect(NavTopic.forIndex(1)?.id, 'optimization'); // Startup Optimizer
       expect(NavTopic.forIndex(2)?.id, 'optimization'); // Browser Cleaner
       expect(NavTopic.forIndex(9)?.id, 'optimization'); // RAM Optimizer
+      expect(NavTopic.forIndex(15)?.id, 'optimization'); // Game Booster
       expect(NavTopic.forIndex(3)?.id, 'system_hardware'); // Hardware Monitor
       expect(NavTopic.forIndex(6)?.id, 'system_hardware'); // Windows Settings
       expect(NavTopic.forIndex(4)?.id, 'software_management'); // Software Installer

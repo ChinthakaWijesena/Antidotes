@@ -36,6 +36,7 @@ Antidotes/
 │   │   ├── browser_cleaner/     # Caches, cookies, history cleaner (Chromium, Gecko)
 │   │   ├── disk_health/         # S.M.A.R.T. disk diagnostics & temperatures
 │   │   ├── dns_changer/         # Fast DNS switcher & latency benchmark
+│   │   ├── game_booster/        # Game library, process watcher, power plan & boost session
 │   │   ├── hardware_monitor/    # Real-time CPU, GPU, RAM, temperature monitor
 │   │   ├── junk_cleaner/        # Temp & log purge with 24h safety guard
 │   │   ├── navigation/          # App sidebar & responsive shell
@@ -75,6 +76,13 @@ Antidotes/
 ### 3.3 Threading & Asynchronous Work (Zero UI Freezes)
 - Any heavy I/O operations (scanning directories, calculating file hashes, uninstaller registry scans, disk health polling) **must run in a background Dart `Isolate`** or non-blocking async process.
 - The UI thread must stay responsive at 60/120 FPS at all times.
+
+### 3.4 Game Booster Architectural & Safety Rules
+- **Never Kill Protected Processes**: System and security processes (`System`, `csrss`, `wininit`, `winlogon`, `services`, `lsass`, `svchost`, `dwm`, `explorer`, `audiodg`, Windows Defender, `antidotes.exe`) are strictly safeguarded in `protected_processes.dart`.
+- **Reversible Sessions**: `BoostSession` must revert all applied actions in **reverse order** (LIFO) when the game exits or the user clicks restore.
+- **Process Priority Safety**: Maximum allowed priority is `High` (default is `Above Normal`). `Realtime` priority is strictly prohibited.
+- **Graceful Termination**: Background apps selected by the user are closed gracefully via `taskkill /PID` first before considering force termination.
+- **Zero Anti-Cheat Interference**: No DLL injection, memory hooking, or overlay injection. Games with BattlEye, Easy Anti-Cheat, and Vanguard must remain intact.
 
 ---
 

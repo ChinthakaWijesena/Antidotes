@@ -1,12 +1,14 @@
 {
-  "latest_version": "1.0.7",
+  "latest_version": "1.0.8",
   "release_date": "2026.11.26",
-  "download_url": "https://github.com/ChinthakaWijesena/Antidotes/releases/download/v1.0.7/Antidotes-Setup-v1.0.7.exe",
+  "download_url": "https://github.com/ChinthakaWijesena/Antidotes/releases/download/v1.0.8/Antidotes-Setup-v1.0.8.exe",
   "mandatory": false,
   "changelog": [
-    "Genuine Windows application icons across both Software Uninstaller and Startup Optimizer",
-    "Dynamic executable and Start Menu shortcut icon extraction for all desktop software",
-    "Resolved real app icons in Startup Apps table and properties dialog (Spotify, Discord, Steam, IDM, Chrome, Edge, etc.)",
-    "Clean standard Material fallback icons for non-installed catalog tools"
+    "New Feature: Game Booster with 1-click launch and automatic reversible system tuning",
+    "Game Watcher: Automatically detects running games and applies High Performance power plan",
+    "Smart CPU Scheduling: Elevates game process priority (Above Normal / High)",
+    "RAM Optimization: Selectively closes background user apps during gameplay",
+    "Real-time Live Telemetry: Live CPU, RAM, and GPU telemetry dashboard",
+    "Safety Guard: Safeguarded protected Windows processes and zero anti-cheat interference"
   ]
 }
