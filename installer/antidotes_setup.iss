@@ -4,6 +4,7 @@
 #define MyAppName "Antidotes"
 #define MyAppVersion "1.0.8"
 #define MyAppPublisher "Antidotes"
+#define MyAppURL "https://antidotes-df58c.web.app/"
 #define MyAppExeName "antidotes.exe"
 
 [Setup]
@@ -12,9 +13,20 @@ AppId={{E6F7A985-2CED-4951-901B-3A8DF7AA546C}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
+AppPublisherURL={#MyAppURL}
+AppSupportURL={#MyAppURL}
+AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
+
+; Version & Metadata Info (helps Windows identify publisher & details)
+VersionInfoVersion={#MyAppVersion}.0
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoDescription=Antidotes - PC Cleaner & Optimizer Installer
+VersionInfoProductName={#MyAppName}
+VersionInfoProductVersion={#MyAppVersion}.0
+VersionInfoCopyright=Copyright (C) 2026 {#MyAppPublisher}
 
 ; Output Configuration
 OutputDir=..\build\installer
