@@ -101,7 +101,10 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
             // 3. Theme Mode Card (Dark / Light)
             ThemeModeCard(
               isLightMode: !theme.isDarkMode,
-              onThemeChanged: (isLight) => theme.setDarkMode(!isLight),
+              onThemeChanged: (isLight) async {
+                await theme.setDarkMode(!isLight);
+                if (mounted) setState(() {});
+              },
             ),
             const SizedBox(height: 16),
 

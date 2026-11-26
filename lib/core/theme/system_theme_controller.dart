@@ -51,11 +51,39 @@ class SystemThemeController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  void setDarkMode(bool isDark) {
+  Future<void> setDarkMode(bool isDark) async {
     if (_isDarkMode != isDark) {
       _isDarkMode = isDark;
       AppColors.updateTheme(_isDarkMode, _accentColor);
       notifyListeners();
+
+      if (Platform.isWindows) {
+        final val = isDark ? '0' : '1';
+        try {
+          await Process.run('reg.exe', [
+            'add',
+            r'HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize',
+            '/v',
+            'AppsUseLightTheme',
+            '/t',
+            'REG_DWORD',
+            '/d',
+            val,
+            '/f',
+          ]);
+          await Process.run('reg.exe', [
+            'add',
+            r'HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize',
+            '/v',
+            'SystemUsesLightTheme',
+            '/t',
+            'REG_DWORD',
+            '/d',
+            val,
+            '/f',
+          ]);
+        } catch (_) {}
+      }
     }
   }
 

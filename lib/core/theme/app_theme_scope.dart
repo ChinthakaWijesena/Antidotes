@@ -6,12 +6,15 @@ import 'system_theme_controller.dart';
 /// the Windows system theme, dark/light mode, or accent color changes.
 class AppThemeScope extends InheritedWidget {
   final SystemThemeController controller;
+  final bool isDarkMode;
+  final Color accentColor;
 
-  const AppThemeScope({
+  AppThemeScope({
     super.key,
     required this.controller,
     required super.child,
-  });
+  })  : isDarkMode = controller.isDarkMode,
+        accentColor = controller.accentColor;
 
   static SystemThemeController of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppThemeScope>();
@@ -21,7 +24,7 @@ class AppThemeScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(AppThemeScope oldWidget) {
-    return oldWidget.controller.isDarkMode != controller.isDarkMode ||
-        oldWidget.controller.accentColor != controller.accentColor;
+    return oldWidget.isDarkMode != isDarkMode ||
+        oldWidget.accentColor != accentColor;
   }
 }
