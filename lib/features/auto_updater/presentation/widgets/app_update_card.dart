@@ -70,7 +70,7 @@ class _AppUpdateCardState extends State<AppUpdateCard> {
   @override
   Widget build(BuildContext context) {
     final isChecking = widget.controller.status == UpdateStatus.checking;
-    final currentVer = widget.controller.updateInfo?.currentVersion ?? '1.0.9';
+    final currentVer = widget.controller.updateInfo?.currentVersion ?? '1.1.0';
 
     return LayoutBuilder(
       builder: (context, constraints) {
