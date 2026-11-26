@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:antidotes/features/junk_cleaner/data/models/junk_category.dart';
 import 'package:antidotes/features/junk_cleaner/data/models/junk_pattern.dart';
 import 'package:antidotes/features/junk_cleaner/data/models/cleaner_safety_options.dart';
+import 'package:antidotes/features/junk_cleaner/data/services/junk_cleaner_service.dart';
 
 void main() {
   group('JunkPattern Matching & Risk Tests', () {
@@ -52,6 +54,64 @@ void main() {
       expect(options.includeLogs, false);
       expect(options.includeBackups, false);
       expect(options.skipSymlinksAndJunctions, true);
+    });
+  });
+
+  group('JunkCleanerService & Category Verification Tests', () {
+    final service = JunkCleanerService();
+    final categories = service.getCategories();
+
+    test('contains all expected BleachBit-aligned categories', () {
+      final types = categories.map((c) => c.type).toSet();
+      expect(types.contains(JunkCategoryType.userTemp), true);
+      expect(types.contains(JunkCategoryType.systemTemp), true);
+      expect(types.contains(JunkCategoryType.inetCache), true);
+      expect(types.contains(JunkCategoryType.recycleBin), true);
+      expect(types.contains(JunkCategoryType.prefetch), true);
+      expect(types.contains(JunkCategoryType.dnsCache), true);
+      expect(types.contains(JunkCategoryType.clipboard), true);
+      expect(types.contains(JunkCategoryType.muiCache), true);
+      expect(types.contains(JunkCategoryType.crashDumps), true);
+      expect(types.contains(JunkCategoryType.windowsLogs), true);
+    });
+
+    test('crash dumps include MEMORY.DMP and LiveKernelReports', () {
+      final crashDumps =
+          categories.firstWhere((c) => c.type == JunkCategoryType.crashDumps);
+      expect(
+          crashDumps.paths.any((p) => p.toLowerCase().endsWith('memory.dmp')),
+          true);
+      expect(
+          crashDumps.paths
+              .any((p) => p.toLowerCase().contains('livekernelreports')),
+          true);
+    });
+
+    test('windows logs include Panther and setupapi', () {
+      final logs =
+          categories.firstWhere((c) => c.type == JunkCategoryType.windowsLogs);
+      expect(logs.paths.any((p) => p.toLowerCase().contains('panther')), true);
+      expect(
+          logs.paths.any((p) => p.toLowerCase().contains('setupapi')), true);
+    });
+
+    test('special categories correctly identified', () {
+      final dns =
+          categories.firstWhere((c) => c.type == JunkCategoryType.dnsCache);
+      final clip =
+          categories.firstWhere((c) => c.type == JunkCategoryType.clipboard);
+      final mui =
+          categories.firstWhere((c) => c.type == JunkCategoryType.muiCache);
+      final rb =
+          categories.firstWhere((c) => c.type == JunkCategoryType.recycleBin);
+      final temp =
+          categories.firstWhere((c) => c.type == JunkCategoryType.userTemp);
+
+      expect(dns.isSpecialCategory, true);
+      expect(clip.isSpecialCategory, true);
+      expect(mui.isSpecialCategory, true);
+      expect(rb.isSpecialCategory, true);
+      expect(temp.isSpecialCategory, false);
     });
   });
 }

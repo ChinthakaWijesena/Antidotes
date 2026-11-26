@@ -33,7 +33,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
     var total = 0;
     for (final cat in widget.categories) {
       if (!cat.isSelected) continue;
-      if (cat.isRecycleBin) {
+      if (cat.isSpecialCategory) {
         total += cat.totalBytes;
       } else {
         total += cat.items
@@ -48,7 +48,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
     var total = 0;
     for (final cat in widget.categories) {
       if (!cat.isSelected) continue;
-      if (cat.isRecycleBin) {
+      if (cat.isSpecialCategory) {
         total += cat.fileCount;
       } else {
         total += cat.items.where((i) => i.isSelected).length;
@@ -173,7 +173,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
                   children: [
                     for (final cat in widget.categories)
                       if (cat.isSelected &&
-                          (cat.items.isNotEmpty || cat.isRecycleBin))
+                          (cat.items.isNotEmpty || cat.isSpecialCategory))
                         _buildCategoryGroup(cat),
                   ],
                 ),
@@ -256,7 +256,7 @@ class _CleanConfirmationDialogState extends State<CleanConfirmationDialog> {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
-                  onPressed: selectedBytes == 0
+                  onPressed: (selectedBytes == 0 && selectedCount == 0)
                       ? null
                       : () {
                           Navigator.of(context).pop();

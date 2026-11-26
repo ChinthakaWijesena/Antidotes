@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import '../../../../core/services/win32_shell_service.dart';
 import '../models/cleaner_safety_options.dart';
@@ -99,7 +100,7 @@ class JunkCleanerService {
         type: JunkCategoryType.crashDumps,
         id: 'crash_dumps',
         title: 'Crash Dumps & Error Reports (WER)',
-        description: 'Memory dumps (*.dmp) and Windows Error Reporting archives',
+        description: 'Memory dumps (MEMORY.DMP, minidumps) and Windows Error Reporting archives',
         icon: Icons.bug_report_outlined,
         paths: [
           if (localAppData.isNotEmpty) ...[
@@ -109,6 +110,8 @@ class JunkCleanerService {
           ],
           p.join(programData, 'Microsoft', 'Windows', 'WER', 'ReportArchive'),
           p.join(winDir, 'Minidump'),
+          p.join(winDir, 'LiveKernelReports'),
+          p.join(winDir, 'MEMORY.DMP'),
         ],
         isSelected: true,
       ),
@@ -133,6 +136,42 @@ class JunkCleanerService {
         paths: [
           if (localAppData.isNotEmpty) p.join(localAppData, 'D3DSCache'),
         ],
+        isSelected: true,
+      ),
+      JunkCategory(
+        type: JunkCategoryType.prefetch,
+        id: 'prefetch',
+        title: 'Windows Prefetch Cache (C:\\Windows\\Prefetch)',
+        description: 'Application launch prefetch cache files (*.pf) (Requires admin rights)',
+        icon: Icons.flash_on_outlined,
+        paths: [p.join(winDir, 'Prefetch')],
+        isSelected: true,
+      ),
+      JunkCategory(
+        type: JunkCategoryType.dnsCache,
+        id: 'dns_cache',
+        title: 'DNS Resolver Cache',
+        description: 'Flushes Windows DNS client cache to resolve domain issues and clear lookups',
+        icon: Icons.dns_outlined,
+        paths: const [],
+        isSelected: true,
+      ),
+      JunkCategory(
+        type: JunkCategoryType.clipboard,
+        id: 'clipboard',
+        title: 'Windows Clipboard',
+        description: 'Clears active desktop clipboard data (copied text, images, and file paths)',
+        icon: Icons.content_paste_outlined,
+        paths: const [],
+        isSelected: true,
+      ),
+      JunkCategory(
+        type: JunkCategoryType.muiCache,
+        id: 'mui_cache',
+        title: 'Windows MUICache',
+        description: 'Multilingual User Interface cache entries for uninstalled and older apps',
+        icon: Icons.history_outlined,
+        paths: const [],
         isSelected: true,
       ),
       JunkCategory(
@@ -179,11 +218,14 @@ class JunkCleanerService {
       JunkCategory(
         type: JunkCategoryType.windowsLogs,
         id: 'windows_logs',
-        title: 'Windows Event & CBS Logs',
-        description: 'System event logs and CBS setup archives (Optional / Careful)',
+        title: 'Windows Event, Setup & CBS Logs',
+        description: 'System event logs, Windows setup archives (Panther), and CBS logs',
         icon: Icons.description_outlined,
         paths: [
           p.join(winDir, 'Logs'),
+          p.join(winDir, 'Panther'),
+          p.join(winDir, 'Debug'),
+          p.join(winDir, 'inf', 'setupapi.dev.log'),
         ],
         isCareful: true,
         isSelected: false,
@@ -216,6 +258,95 @@ class JunkCleanerService {
           ),
         );
       }
+      category.isScanning = false;
+      return;
+    }
+
+    // Handle DNS Cache
+    if (category.type == JunkCategoryType.dnsCache) {
+      var count = 0;
+      try {
+        final result = await Process.run('ipconfig', ['/displaydns']);
+        if (result.exitCode == 0) {
+          final stdout = result.stdout as String;
+          count = RegExp(r'Record Name', caseSensitive: false).allMatches(stdout).length;
+        }
+      } catch (_) {}
+      if (count > 0) {
+        category.fileCount = count;
+        category.totalBytes = count * 256;
+        category.items.add(
+          JunkItem(
+            path: 'Windows DNS Cache',
+            name: 'DNS Resolver Cache ($count active records)',
+            sizeInBytes: category.totalBytes,
+            categoryId: category.id,
+            risk: PatternRisk.low,
+          ),
+        );
+      }
+      category.isScanning = false;
+      return;
+    }
+
+    // Handle Clipboard
+    if (category.type == JunkCategoryType.clipboard) {
+      try {
+        final hasStrings = await Clipboard.hasStrings();
+        if (hasStrings) {
+          final data = await Clipboard.getData(Clipboard.kTextPlain);
+          final text = data?.text ?? '';
+          final bytes = text.isNotEmpty ? text.length * 2 : 1024;
+          category.fileCount = 1;
+          category.totalBytes = bytes;
+          category.items.add(
+            JunkItem(
+              path: 'Windows Clipboard',
+              name: 'Clipboard Contents (${text.length} chars)',
+              sizeInBytes: bytes,
+              categoryId: category.id,
+              risk: PatternRisk.low,
+            ),
+          );
+        }
+      } catch (_) {}
+      category.isScanning = false;
+      return;
+    }
+
+    // Handle MUICache
+    if (category.type == JunkCategoryType.muiCache) {
+      try {
+        final result = await Process.run('reg', [
+          'query',
+          r'HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache',
+        ]);
+        if (result.exitCode == 0) {
+          final lines = (result.stdout as String).split('\n');
+          var count = 0;
+          var totalSize = 0;
+          for (final line in lines) {
+            final trimmed = line.trim();
+            if (trimmed.contains('REG_SZ') || trimmed.contains('REG_BINARY')) {
+              count++;
+              totalSize += trimmed.length * 2;
+            }
+          }
+          if (count > 0) {
+            category.fileCount = count;
+            category.totalBytes = totalSize;
+            category.items.add(
+              JunkItem(
+                path: r'HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache',
+                name: 'MUICache Registry History ($count items)',
+                sizeInBytes: totalSize,
+                categoryId: category.id,
+                risk: PatternRisk.low,
+              ),
+            );
+          }
+        }
+      } catch (_) {}
       category.isScanning = false;
       return;
     }
@@ -270,34 +401,104 @@ class JunkCleanerService {
     var filesFailed = 0;
     final logEntries = <DeletionLogEntry>[];
 
-    // 1. Handle Recycle Bin first (via Win32 background Isolate)
+    // 1. Handle special non-file categories first (Recycle Bin, DNS, Clipboard, MUICache)
     for (final category in categories) {
-      if (!category.isSelected || !category.isRecycleBin) continue;
+      if (!category.isSelected) continue;
 
-      onProgress?.call('Emptying Windows Recycle Bin...', filesDeleted, bytesFreed);
-      final success = await Win32ShellService.emptyRecycleBin();
-      if (success) {
-        bytesFreed += category.totalBytes;
-        filesDeleted += category.fileCount;
-        logEntries.add(
-          DeletionLogEntry(
-            timestamp: DateTime.now(),
-            filePath: 'Recycle Bin',
-            sizeInBytes: category.totalBytes,
-            status: DeletionStatus.deleted,
-          ),
-        );
-        category.reset();
-        category.isCleaned = true;
-      } else {
-        filesFailed += category.fileCount;
+      if (category.isRecycleBin) {
+        onProgress?.call('Emptying Windows Recycle Bin...', filesDeleted, bytesFreed);
+        final success = await Win32ShellService.emptyRecycleBin();
+        if (success) {
+          bytesFreed += category.totalBytes;
+          filesDeleted += category.fileCount;
+          logEntries.add(
+            DeletionLogEntry(
+              timestamp: DateTime.now(),
+              filePath: 'Recycle Bin',
+              sizeInBytes: category.totalBytes,
+              status: DeletionStatus.deleted,
+            ),
+          );
+          category.reset();
+          category.isCleaned = true;
+        } else {
+          filesFailed += category.fileCount;
+        }
+      } else if (category.type == JunkCategoryType.dnsCache) {
+        onProgress?.call('Flushing Windows DNS Resolver Cache...', filesDeleted, bytesFreed);
+        try {
+          await Process.run('ipconfig', ['/flushdns']);
+          await Process.run('powershell', ['-NoProfile', '-Command', 'Clear-DnsClientCache'], runInShell: true);
+          bytesFreed += category.totalBytes;
+          filesDeleted += category.fileCount;
+          logEntries.add(
+            DeletionLogEntry(
+              timestamp: DateTime.now(),
+              filePath: 'DNS Resolver Cache',
+              sizeInBytes: category.totalBytes,
+              status: DeletionStatus.deleted,
+            ),
+          );
+          category.reset();
+          category.isCleaned = true;
+        } catch (_) {
+          filesFailed += category.fileCount;
+        }
+      } else if (category.type == JunkCategoryType.clipboard) {
+        onProgress?.call('Clearing Windows Desktop Clipboard...', filesDeleted, bytesFreed);
+        try {
+          await Clipboard.setData(const ClipboardData(text: ''));
+          Win32ShellService.emptyClipboard();
+          bytesFreed += category.totalBytes;
+          filesDeleted += category.fileCount;
+          logEntries.add(
+            DeletionLogEntry(
+              timestamp: DateTime.now(),
+              filePath: 'Windows Clipboard',
+              sizeInBytes: category.totalBytes,
+              status: DeletionStatus.deleted,
+            ),
+          );
+          category.reset();
+          category.isCleaned = true;
+        } catch (_) {
+          filesFailed += category.fileCount;
+        }
+      } else if (category.type == JunkCategoryType.muiCache) {
+        onProgress?.call('Purging MUICache registry entries...', filesDeleted, bytesFreed);
+        try {
+          final res = await Process.run('reg', [
+            'delete',
+            r'HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache',
+            '/va',
+            '/f',
+          ]);
+          if (res.exitCode == 0) {
+            bytesFreed += category.totalBytes;
+            filesDeleted += category.fileCount;
+            logEntries.add(
+              DeletionLogEntry(
+                timestamp: DateTime.now(),
+                filePath: r'HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache',
+                sizeInBytes: category.totalBytes,
+                status: DeletionStatus.deleted,
+              ),
+            );
+            category.reset();
+            category.isCleaned = true;
+          } else {
+            filesFailed += category.fileCount;
+          }
+        } catch (_) {
+          filesFailed += category.fileCount;
+        }
       }
     }
 
-    // 2. Gather selected items for file categories
+    // 2. Gather selected items for standard file categories
     final workList = <Map<String, dynamic>>[];
     for (final category in categories) {
-      if (!category.isSelected || category.isRecycleBin) continue;
+      if (!category.isSelected || category.isSpecialCategory) continue;
       final selected = category.items.where((i) => i.isSelected).toList();
       if (selected.isEmpty) continue;
       workList.add({
@@ -336,7 +537,7 @@ class JunkCleanerService {
 
               // Update category items on main Isolate
               for (final category in categories) {
-                if (!category.isSelected || category.isRecycleBin) continue;
+                if (!category.isSelected || category.isSpecialCategory) continue;
                 final failedPaths = failedByCat[category.id] ?? const <String>{};
                 final remaining = category.items
                     .where((item) => !item.isSelected || failedPaths.contains(item.path))
@@ -361,7 +562,7 @@ class JunkCleanerService {
     } else {
       // Mark empty selected file categories as cleaned
       for (final category in categories) {
-        if (category.isSelected && !category.isRecycleBin) {
+        if (category.isSelected && !category.isSpecialCategory) {
           final remaining = category.items.where((i) => !i.isSelected).toList();
           category.items = remaining;
           category.fileCount = remaining.length;
@@ -407,8 +608,30 @@ Future<void> _scanCategoryIsolate(List<dynamic> args) async {
   final excludedFoldersLower =
       options.excludeFolders.map((f) => f.toLowerCase()).toList();
 
-  for (final dirPath in paths) {
-    final dir = Directory(dirPath);
+  for (final itemPath in paths) {
+    // Check if itemPath is a single file (e.g. MEMORY.DMP or setupapi.dev.log)
+    final file = File(itemPath);
+    if (await file.exists()) {
+      try {
+        final stat = await file.stat();
+        final fileName = p.basename(itemPath);
+        items.add(
+          JunkItem(
+            path: itemPath,
+            name: fileName,
+            sizeInBytes: stat.size,
+            categoryId: categoryId,
+            risk: PatternRisk.low,
+            lastModified: stat.modified,
+            isSelected: true,
+          ),
+        );
+        totalBytes += stat.size;
+      } catch (_) {}
+      continue;
+    }
+
+    final dir = Directory(itemPath);
     if (!await dir.exists()) continue;
 
     try {
@@ -448,8 +671,12 @@ Future<void> _scanCategoryIsolate(List<dynamic> args) async {
           continue;
         }
 
-        // *.log is default OFF
-        if (lowerName.endsWith('.log') && !options.includeLogs) continue;
+        // *.log is default OFF, unless this category is specifically windowsLogs
+        if (type != JunkCategoryType.windowsLogs &&
+            lowerName.endsWith('.log') &&
+            !options.includeLogs) {
+          continue;
+        }
 
         // *.old and *.bak are default OFF
         if ((lowerName.endsWith('.old') || lowerName.endsWith('.bak')) &&
@@ -465,7 +692,8 @@ Future<void> _scanCategoryIsolate(List<dynamic> args) async {
 
           final stat = await entity.stat();
 
-          if (options.ignoreRecent24Hours &&
+          if (type != JunkCategoryType.prefetch &&
+              options.ignoreRecent24Hours &&
               stat.modified.isAfter(recent24hThreshold)) {
             continue;
           }

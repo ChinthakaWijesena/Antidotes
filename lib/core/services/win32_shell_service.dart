@@ -200,4 +200,22 @@ class Win32ShellService {
       await Process.start('cleanmgr.exe', [], runInShell: true);
     } catch (_) {}
   }
+
+  /// Thoroughly flushes and empties the Windows desktop clipboard via Win32 user32 API
+  static bool emptyClipboard() {
+    if (!Platform.isWindows) return false;
+    try {
+      final user32 = DynamicLibrary.open('user32.dll');
+      final openClip = user32.lookupFunction<Int32 Function(IntPtr), int Function(int)>('OpenClipboard');
+      final emptyClip = user32.lookupFunction<Int32 Function(), int Function()>('EmptyClipboard');
+      final closeClip = user32.lookupFunction<Int32 Function(), int Function()>('CloseClipboard');
+
+      if (openClip(0) != 0) {
+        emptyClip();
+        closeClip();
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
 }

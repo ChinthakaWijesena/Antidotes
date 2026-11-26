@@ -1,14 +1,15 @@
 {
-  "latest_version": "1.0.8",
+  "latest_version": "1.0.9",
   "release_date": "2026.11.26",
-  "download_url": "https://github.com/ChinthakaWijesena/Antidotes/releases/download/v1.0.8/Antidotes-Setup-v1.0.8.exe",
+  "download_url": "https://github.com/ChinthakaWijesena/Antidotes/releases/download/v1.0.9/Antidotes-Setup-v1.0.9.exe",
   "mandatory": false,
   "changelog": [
-    "New Feature: Game Booster with 1-click launch and automatic reversible system tuning",
-    "Game Watcher: Automatically detects running games and applies High Performance power plan",
-    "Smart CPU Scheduling: Elevates game process priority (Above Normal / High)",
-    "RAM Optimization: Selectively closes background user apps during gameplay",
-    "Real-time Live Telemetry: Live CPU, RAM, and GPU telemetry dashboard",
-    "Safety Guard: Safeguarded protected Windows processes and zero anti-cheat interference"
+    "Junk Cleaner Enhancement: Added Windows Prefetch (*.pf) cache cleaning",
+    "Junk Cleaner Enhancement: Added DNS Resolver Cache flushing",
+    "Junk Cleaner Enhancement: Added Windows Desktop Clipboard purge",
+    "Junk Cleaner Enhancement: Added MUICache registry history cleaning",
+    "Junk Cleaner Enhancement: Expanded crash dumps (MEMORY.DMP & LiveKernelReports)",
+    "Junk Cleaner Enhancement: Expanded Windows setup, Panther & Debug logs",
+    "DNS Changer Fix: Automatically releases Google/YouTube SafeSearch lock when switching DNS"
   ]
 }

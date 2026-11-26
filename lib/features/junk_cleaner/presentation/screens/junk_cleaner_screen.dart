@@ -71,7 +71,7 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
   }
 
   void _confirmAndClean() {
-    if (_controller.selectedJunkBytes == 0) return;
+    if (_controller.selectedJunkBytes == 0 && _controller.selectedJunkFiles == 0) return;
 
     showDialog(
       context: context,
@@ -336,7 +336,7 @@ class _JunkCleanerScreenState extends State<JunkCleanerScreen> {
 
             // Clean Button
             ElevatedButton.icon(
-              onPressed: isBusy || selectedBytes == 0 ? null : _confirmAndClean,
+              onPressed: isBusy || (selectedBytes == 0 && _controller.selectedJunkFiles == 0) ? null : _confirmAndClean,
               icon: const Icon(Icons.delete_sweep_rounded, size: 18),
               label: Text(
                 selectedBytes > 0

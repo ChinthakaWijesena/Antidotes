@@ -43,7 +43,7 @@ class JunkCleanerController extends ChangeNotifier {
     var total = 0;
     for (final cat in _categories) {
       if (!cat.isSelected) continue;
-      if (cat.isRecycleBin) {
+      if (cat.isSpecialCategory) {
         total += cat.totalBytes;
       } else {
         total += cat.items
@@ -58,7 +58,7 @@ class JunkCleanerController extends ChangeNotifier {
     var total = 0;
     for (final cat in _categories) {
       if (!cat.isSelected) continue;
-      if (cat.isRecycleBin) {
+      if (cat.isSpecialCategory) {
         total += cat.fileCount;
       } else {
         total += cat.items.where((i) => i.isSelected).length;
@@ -127,7 +127,7 @@ class JunkCleanerController extends ChangeNotifier {
   }
 
   Future<void> startClean() async {
-    if (isScanning || isCleaning || selectedJunkBytes == 0) return;
+    if (isScanning || isCleaning || (selectedJunkBytes == 0 && selectedJunkFiles == 0)) return;
 
     _state = CleanerState.cleaning;
     _currentProcessingPath = 'Starting cleanup process...';

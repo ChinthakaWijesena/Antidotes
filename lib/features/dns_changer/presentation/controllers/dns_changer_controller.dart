@@ -114,6 +114,12 @@ class DnsChangerController extends ChangeNotifier {
     bool success = false;
     if (provider.isDefaultDhcp) {
       success = await _service.resetDnsToDhcp(_selectedAdapter!.name);
+      if (_isSafeSearchEnforced) {
+        await toggleSafeSearch(false);
+      }
+      if (_isBrowserDohBlocked) {
+        await toggleBrowserDoh(false);
+      }
     } else {
       success = await _service.applyDnsToAdapter(
         adapterName: _selectedAdapter!.name,
@@ -128,6 +134,9 @@ class DnsChangerController extends ChangeNotifier {
       // If the family provider recommends SafeSearch, automatically ensure SafeSearch is active
       if (provider.enforcesSafeSearch && !_isSafeSearchEnforced) {
         await toggleSafeSearch(true);
+      } else if (!provider.isFamilySafe && _isSafeSearchEnforced) {
+        // Automatically release SafeSearch restriction when switching to normal DNS (Google, Cloudflare, etc.)
+        await toggleSafeSearch(false);
       }
     }
 
@@ -183,6 +192,12 @@ class DnsChangerController extends ChangeNotifier {
     notifyListeners();
 
     final success = await _service.resetDnsToDhcp(_selectedAdapter!.name);
+    if (_isSafeSearchEnforced) {
+      await toggleSafeSearch(false);
+    }
+    if (_isBrowserDohBlocked) {
+      await toggleBrowserDoh(false);
+    }
 
     if (success) {
       _adapters = await _service.getNetworkAdapters();

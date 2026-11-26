@@ -12,6 +12,10 @@ enum JunkCategoryType {
   browserCache,
   windowsUpdate,
   windowsLogs,
+  prefetch,
+  dnsCache,
+  clipboard,
+  muiCache,
 }
 
 class JunkCategory {
@@ -29,6 +33,12 @@ class JunkCategory {
   List<JunkItem> items;
   bool isScanning;
   bool isCleaned;
+
+  bool get isSpecialCategory =>
+      isRecycleBin ||
+      type == JunkCategoryType.dnsCache ||
+      type == JunkCategoryType.clipboard ||
+      type == JunkCategoryType.muiCache;
 
   JunkCategory({
     required this.type,
